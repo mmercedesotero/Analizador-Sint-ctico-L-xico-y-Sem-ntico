@@ -2,7 +2,7 @@
 ## Integrantes 
 * Otero Mercedes 
 * Toto Leandro
-* Vallaza Luca Danilo
+* Vallazza Luca Danilo
 * Istepanoglu Tiziana 
 
 # Preguntas y respuestas
