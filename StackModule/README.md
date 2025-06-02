@@ -23,3 +23,23 @@
 
 
 # BENCHMARK
+
+| Implementación      | Operaciones por Iteración | PUSH (ms)   | POP (ms)    |
+|---------------------|---------------------------|-------------|-------------|
+| **Linked Dynamic**  | 10,000                    | 750.745450  | 792.569720  |
+|                     | 100                       | 0.138520    | 0.138995    |
+|                     | 10                        | 0.003200    | 0.003000    |
+| **Contiguous Static** | 10,000                    | 0.049920    | 0.043095    |
+|                     | 100                       | 0.000460    | 0.000420    |
+|                     | 10                        | 0.000140    | 0.000145    |
+
+
+## Espacio en memoria
+
+**Linked Dynamic**
+* Dinamico. Se asigna memoria a medida que se agregan elementos.
+* Uso (para stack de int): ActualLength * 4B
+
+**Contiguous Static:**
+* Estatico. Se asigan al crear el Stack.
+* Uso (para stack de int): StackSize * 4B + 4B (del top)
