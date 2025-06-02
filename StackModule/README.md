@@ -20,7 +20,19 @@ Esto implicaria un aumento de la complejidad, tanto del codigo, como de la memor
 
 ### d. Proponga un nuevo diseño para que el módulo pase a ser un tipo de dato, es decir, permita a un programa utilizar más de un stack.
 
+Se podria definir un header donde se puedan crear funciones que devuelvan punteros para asignarlos como variables dentro de un programa. 
+Para llevar a cabo esta aplicación, se deberian hacer pequeños ajustes sobre funciones como StackInit para que en vez de devolver ``void`` devuelvan ``Node*`` o ``int*`` y un ``int`` para el top. Pudiendo incluso crear un nuevo Struct para almacenar el puntero y el valor de ``top`` para la implementacion de Contiguous Static.
+Tambien se tendrian que modificar las funciones ``Push``, ``Pop``, ``IsFull``, ``IsEmpty`` para recibir por parametro el puntero del stack.
 
+```
+// Ejemplo simplificado de aplicacion
+
+Node* stack1 = StackInit()
+StackPush(3, stack1)
+StackIsEmpty(stack1)          // devolvería false
+int value = StackPop(stack1)  // devuelve 3
+
+```
 
 # BENCHMARK
 
