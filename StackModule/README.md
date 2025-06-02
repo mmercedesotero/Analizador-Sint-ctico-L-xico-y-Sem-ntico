@@ -21,16 +21,46 @@ Esto implicaria un aumento de la complejidad, tanto del codigo, como de la memor
 ### d. Proponga un nuevo diseño para que el módulo pase a ser un tipo de dato, es decir, permita a un programa utilizar más de un stack.
 
 Se podria definir un header donde se puedan crear funciones que devuelvan punteros para asignarlos como variables dentro de un programa. 
-Para llevar a cabo esta aplicación, se deberian hacer pequeños ajustes sobre funciones como StackInit para que en vez de devolver ``void`` devuelvan ``Node*`` o ``int*`` y un ``int`` para el top. Pudiendo incluso crear un nuevo Struct para almacenar el puntero y el valor de ``top`` para la implementacion de Contiguous Static.
+Para llevar a cabo esta aplicación, se deberian hacer pequeños ajustes sobre funciones como StackInit para que en vez de devolver ``void`` devuelvan ``Node*`` o ``int*`` y un ``int`` para el top. Se deberían también crear nuevos Struct para almacenar el puntero y el valor de ``top`` para la implementacion de Contiguous Static.
 Tambien se tendrian que modificar las funciones ``Push``, ``Pop``, ``IsFull``, ``IsEmpty`` para recibir por parametro el puntero del stack.
+Definicion de stacks
+```
+// Para Contiguous Static
+typedef struct {
+    int elements[STACK_SIZE];
+    int top;
+} Stack;
+
+// Ejemplo de declaración de funciones
+void StackInit(Stack* stack);
+void StackPush(Stack* stack, int element);
+int StackPop(Stack* stack);
+int StackIsEmpty(Stack* stack);
+int StackIsFull(Stack* stack);
+
+
+// Para LinkedDynamic
+typedef struct{
+  Node* head,
+  int size
+} Stack;
+
+// Ejemplo de declaración de funciones
+Stack* StackInit(void);
+void StackPush(Stack* stack, int element);
+int StackPop(Stack* stack);
+int StackIsEmpty(Stack* stack);
+void StackDestroy(Stack* stack);
+```
+Además, se deberian modificar las funciones para trabajar con el nuevo tipo Stack.
 
 ```
 // Ejemplo simplificado de aplicacion
 
-Node* stack1 = StackInit()
-StackPush(3, stack1)
-StackIsEmpty(stack1)          // devolvería false
-int value = StackPop(stack1)  // devuelve 3
+Stack stack1 = StackInit()
+StackPush(3, &stack1)
+StackIsEmpty(&stack1)          // devolvería false
+int value = StackPop(&stack1)  // devolvería 3
 
 ```
 
