@@ -43,3 +43,11 @@
 **Contiguous Static:**
 * Estatico. Se asigan al crear el Stack.
 * Uso (para stack de int): StackSize * 4B + 4B (del top)
+
+#Make
+
+Se pueden crear los .exe correspondiente a los distintos tipos de Stack segun se necesite
+
+* `` make all ``: Para crear ambos .exe
+* `` make StackModuleLinkedDynamic  `` para crear el .exe del Linked Dynamic
+* `` make StackModuleContiguousStatic  `` para crear el .exe del Contiguous Static
