@@ -45,7 +45,13 @@ Esto implicaria un aumento de la complejidad, tanto del codigo, como de la memor
 * Estatico. Se asigan al crear el Stack.
 * Uso (para stack de int): StackSize * 4B + 4B (del top)
 
-#Make
+## Conclusiones
+
+Se observa del analisis de las mediciones realizadas que la configuracion Contiguous Static es muy superior en terminos de velocidad.
+
+La ventaja de la configuracion Linked Dynamic radica en el espacio en memoria, pudiendo ser superior en entornos en los que se deconoce la cantidad de elementos que se cargaran a la pila, ya que ofrece mayor versatilidad a cambio de un mayor overhead.
+
+# Make
 
 Se pueden crear los .exe correspondiente a los distintos tipos de Stack segun se necesite
 
@@ -53,8 +59,3 @@ Se pueden crear los .exe correspondiente a los distintos tipos de Stack segun se
 * `` make StackModuleLinkedDynamic  `` para crear el .exe del Linked Dynamic
 * `` make StackModuleContiguousStatic  `` para crear el .exe del Contiguous Static
 
-## Conclusiones
-
-Se observa del analisis de las mediciones realizadas que la configuracion Contiguous Static es muy superior en terminos de velocidad.
-
-La ventaja de la configuracion Linked Dynamic radica en el espacio en memoria, pudiendo ser superior en entornos en los que se deconoce la cantidad de elementos que se cargaran a la pila, ya que ofrece mayor versatilidad a cambio de un mayor overhead.
