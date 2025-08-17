@@ -1,0 +1,12 @@
+digraph AFD { 
+  node [shape=circle];
+  qo [ shape=doublecircle];
+  q2 [label ="q2\n Dec"];
+  qo ;
+  q1 ;
+  q2 ;
+  q3 ;
+  q4 ;
+  q5 ;
+
+} 
