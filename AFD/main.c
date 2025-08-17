@@ -21,9 +21,10 @@ int main(int argc, char *argv[]) {
     char buffer[1];
 
     // mientras obtengamos caracteres
-        int c;
-   while ((c = getc(f)) != EOF) {
-      printf("- %c\n", c);
+    int c;
+    while ((c = getc(f)) != EOF)
+    {
+        printf("- %c\n", c);
     }
 
     return 0;
