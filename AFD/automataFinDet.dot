@@ -13,5 +13,5 @@ digraph AFD {
   q1 -> q5 [label = "[0-7]"];
   q5 -> q5 [label = "[0-7]"];
   q3 -> q4 [label = "[0-9a-fA-F]"];
-  q4 -> q4 [label = "[0-9a-fA-F]"]
+  q4 -> q4 [label = "[0-9a-fA-F]"];
 } 
