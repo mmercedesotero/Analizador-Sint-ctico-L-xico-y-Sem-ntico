@@ -17,5 +17,14 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    // Leemos el contenido del archivo
+    char buffer[1];
+
+    // mientras obtengamos caracteres
+        int c;
+   while ((c = getc(f)) != EOF) {
+      printf("- %c\n", c);
+    }
+
     return 0;
 }
