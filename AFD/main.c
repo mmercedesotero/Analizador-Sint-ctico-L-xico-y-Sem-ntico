@@ -29,8 +29,8 @@ typedef enum {
 
 // Tabla de transición del AFD
 int AFD[CANT_ESTADOS][CANT_ENTRADAS] = {
-//        DIG_0    1-7
-/* Q0 */   {QCer , QNum },
+//        DIG_0    1-7   8-9    Xx    A-F/a-f  OTRO
+/* Q0 */   {QCer , QNum, QDec, ERROR,  ERROR , ERROR },
 /* QCer */ {},
 /* QOx */  {},
 /* QNum */ {},
