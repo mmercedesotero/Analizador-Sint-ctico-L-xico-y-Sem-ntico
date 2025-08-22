@@ -8,9 +8,7 @@ typedef enum{
     Q0,   // Estado inicial
     QCer, // Cero inicial: (octal o hexadecimal)
     QOx,  // Cero X (0x / 0X) 
-    QNum, // Numeros del 1 al 7 (Octal o Decimal)
-    Q0Num, // Numeros 0[1 -7] (Octal o Hex)
-    QDec, // Decimal
+    QDec, // Decimal (Si no arranca con 0)
     QOct, // Octal
     QHex, // Hexadecimal
     ERROR, // Estado de error
@@ -30,14 +28,12 @@ typedef enum {
 
 // Tabla de transición del AFD
 int AFD[CANT_ESTADOS][CANT_ENTRADAS] = {
-//        DIG_0    1-7   8-9    Xx    A-F/a-f  OTRO
-/* Q0 */   {QCer , QNum, QDec, ERROR,  ERROR , ERROR },
-/* QCer */ {ERROR, Q0Num,QHex, Q0x  , QHex   , ERROR },
-/* QOx */  {},
-/* QNum */ {},
-/* Q0Num */{},
-/* QDec */ {},
-/* QOct */ {},
+//        DIG_0    1-7    8-9    Xx    A-F/a-f  OTRO
+/* Q0 */   {QCer , QNum, QDec , ERROR, ERROR ,  ERROR },
+/* QCer */ {ERROR, QOct, QHex , Q0x  , QHex   , ERROR },
+/* QOx */  {QHex , QOct, QHex,  ERROR, QHex   , ERROR },
+/* QDec */ {QDec,  QDec, QDec,  ERROR, ERROR,   ERROR},
+/* QOct */ {QOct,  QOct, QHex,  ERROR, QHex   , ERROR },
 /* QHex */ {},
 /* ERROR */{},
 }
