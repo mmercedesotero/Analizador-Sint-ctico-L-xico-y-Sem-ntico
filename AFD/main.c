@@ -8,6 +8,7 @@ typedef enum{
     Q0,   // Estado inicial
     QCer, // Cero inicial: (octal o hexadecimal)
     QOx,  // Cero X (0x / 0X) 
+    QNum, // Numeros del 1 al 7 (Octal o Decimal)
     QDec, // Decimal
     QOct, // Octal
     QHex, // Hexadecimal
@@ -26,17 +27,17 @@ typedef enum {
     CANT_ENTRADAS
 } Entrada;
 
+// Tabla de transición del AFD
 int AFD[CANT_ESTADOS][CANT_ENTRADAS] = {
-[],
-[],
-[],
-[],
-[],
-[],
-[],
-[],
-[],
-[]
+//        DIG_0    1-7
+/* Q0 */   {QCer , QNum },
+/* QCer */ {},
+/* QOx */  {},
+/* QNum */ {},
+/* QDec */ {},
+/* QOct */ {},
+/* QHex */ {},
+/* ERROR */{},
 }
 
 int main(int argc, char *argv[]) {
