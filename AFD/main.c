@@ -29,13 +29,13 @@ typedef enum {
 // Tabla de transición del AFD
 int AFD[CANT_ESTADOS][CANT_ENTRADAS] = {
 //        DIG_0    1-7    8-9    Xx    A-F/a-f  OTRO
-/* Q0 */   {QCer , QNum, QDec , ERROR, ERROR ,  ERROR },
-/* QCer */ {ERROR, QOct, QHex , Q0x  , QHex   , ERROR },
-/* QOx */  {QHex , QOct, QHex,  ERROR, QHex   , ERROR },
-/* QDec */ {QDec,  QDec, QDec,  ERROR, ERROR,   ERROR},
-/* QOct */ {QOct,  QOct, QHex,  ERROR, QHex   , ERROR },
-/* QHex */ {},
-/* ERROR */{},
+/* Q0 */   {QCer , QNum, QDec , ERROR, ERROR ,ERROR },
+/* QCer */ {ERROR, QOct, QHex , Q0x  , QHex  ,ERROR },
+/* QOx */  {QHex , QOct, QHex,  ERROR, QHex  ,ERROR },
+/* QDec */ {QDec,  QDec, QDec,  ERROR, ERROR, ERROR},
+/* QOct */ {QOct,  QOct, QHex,  ERROR, QHex  ,ERROR },
+/* QHex */ {QHex,  QHex, QHex,  ERROR, QHex  ,ERROR },
+/* ERROR */{ERROR, ERROR,ERROR, ERROR, ERROR, ERROR},
 }
 
 int main(int argc, char *argv[]) {
