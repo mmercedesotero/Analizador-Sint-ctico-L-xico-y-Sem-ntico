@@ -3,7 +3,44 @@
 #include <string.h>
 
 
+// Estados
+typedef enum{
+    Q0,   // Estado inicial
+    QCer, // Cero inicial: (octal o hexadecimal)
+    QOx,  // Cero X (0x / 0X) 
+    QDec, // Decimal
+    QOct, // Octal
+    QHex, // Hexadecimal
+    ERROR, // Estado de error
+    CANT_ESTADOS
+} Estado;
+
+// Entradas
+typedef enum {
+    DIGITO_0,
+    DIGITO_1_7,
+    DIGITO_8_9,
+    LETRA_Xx,
+    LETRA_Aa_Ff,
+    OTRO,
+    CANT_ENTRADAS
+} Entrada;
+
+int AFD[CANT_ESTADOS][CANT_ENTRADAS] = {
+[],
+[],
+[],
+[],
+[],
+[],
+[],
+[],
+[],
+[]
+}
+
 int main(int argc, char *argv[]) {
+
     if (argc != 2) {
         printf("Uso: %s <ruta-archivo>.txt\n", argv[0]);
         return 1;
