@@ -32,7 +32,7 @@ int AFD[CANT_ESTADOS][CANT_ENTRADAS] = {
 /* QCer */ {ERROR, QOct, QHex , QOx  , QHex  ,ERROR },
 /* QOx */  {QHex , QOct, QHex,  ERROR, QHex  ,ERROR },
 /* QDec */ {QDec,  QDec, QDec,  ERROR, ERROR, ERROR},
-/* QOct */ {QOct,  QOct, QHex,  ERROR, QHex  ,ERROR },
+/* QOct */ {QHex,  QHex, QHex,  ERROR, QHex  ,ERROR },
 /* QHex */ {QHex,  QHex, QHex,  ERROR, QHex  ,ERROR },
 /* ERROR */{ERROR, ERROR,ERROR, ERROR, ERROR, ERROR},
 };
