@@ -1,8 +1,8 @@
 digraph AFD { 
   rankdir=LR; 
-  size="7";
+  size="13";
   node [shape=circle];
-  Q0     [label="Q0 (inicial)"];
+  Q0     [label="Q0\n Inicio"];
   QDec   [label="QDec", shape=doublecircle];
   QCer   [label="QCer", shape=doublecircle];
   QOx    [label="QOx", shape=doublecircle];
@@ -22,26 +22,18 @@ digraph AFD {
   // QCer
   QCer->QOct [label="1-7"];
   QCer->QHex [label="8-9"];
-  QCer->QOx   [label="Xx"];
-  QCer->QHex  [label="A-F/a-f"];
+  QCer->QOx  [label="Xx"];
+  QCer->QHex [label="A-F/a-f"];
   QCer -> QERROR [label="λ"];
   // QOx
-  QOx->QHex [label="0"];
-  QOx->QHex [label="1-7"];
-  QOx->QHex [label="8-9"];
-  QOx->QHex [label="A-F/a-f"];
+  QOx->QHex [label="0,1-7,8-9,A-F/a-f"];
   QOx -> QERROR [label="λ"];
   // QOct
-  QOct-> QOct [label="0"];
-  QOct-> QOct [label="1-7"];
-  QOct-> QHex [label="8-9"];
-  QOct-> QHex [label="A-F/a-f"];
+  QOct-> QOct [label="0,1-7"];
+  QOct-> QHex [label="8-9,A-F/a-f"]; 
   QOct -> QERROR [label="λ"];
   // QHex
-  QHex-> QHex [label="0"];
-  QHex-> QHex [label="1-7"];
-  QHex-> QHex [label="8-9"];
-  QHex-> QHex [label="A-F/a-f"];
+  QHex-> QHex [label="0,1-7,8-9,A-F/a-f"];
   QHex -> QERROR [label="λ"];
   // QERROR
   QERROR -> QERROR [label="λ"];
