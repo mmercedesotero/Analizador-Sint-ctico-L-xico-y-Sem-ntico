@@ -37,6 +37,46 @@ int AFD[CANT_ESTADOS][CANT_ENTRADAS] = {
 /* ERROR */{ERROR, ERROR,ERROR, ERROR, ERROR, ERROR},
 };
 
+// Función para clasificar la entrada
+Entrada reconocerEntrada(char c) {
+    if (c == '0') return DIGITO_0;
+    if (c >= '1' && c <= '7') return DIGITO_1_7;
+    if (c == '8' || c == '9') return DIGITO_8_9;
+    if (c == 'x' || c == 'X') return LETRA_Xx;
+    if ((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) return LETRA_Aa_Ff;
+    return OTRO;
+}
+
+void indicarEstado(Estado estado) {
+    switch(estado){
+        case Q0:
+            printf(" -> Estado inicial (No valido)\n");
+            break;
+        case QCer:
+            printf(" -> Cero inicial (No valido)\n");
+            break;
+        case QOx:
+            printf(" -> Cero X (No valido)\n");
+            break;
+        case QDec:
+            printf(" -> Decimal (Valido)\n");
+            break;
+        case QOct: 
+            printf(" -> Octal (valido)\n");
+            break;
+        case QHex:
+            printf(" -> Hexadecimal (valido)\n");
+            break;
+        case ERROR:
+            printf(" -> Estado de error (No valido)\n");
+            break;
+        default:
+            printf(" -> Estado desconocido (No valido)\n");
+            break;
+    }
+    return;
+}
+
 int main(int argc, char *argv[]) {
 
     if (argc != 2) {
@@ -57,10 +97,25 @@ int main(int argc, char *argv[]) {
 
     // mientras obtengamos caracteres
     int c;
+    Estado estado = Q0;
     while ((c = getc(f)) != EOF)
     {
-        printf("- %c\n", c);
+        // Si es una coma, indicamos el estado y reiniciamos
+        if (c == ',') {
+            indicarEstado(estado);
+            estado = Q0;
+            continue;
+        }
+        // Clasificamos la entrada
+        Entrada entrada = reconocerEntrada(c);
+        // Hacemos la transición
+        estado = AFD[estado][entrada];
+
+        printf("%c", c);
     }
+    // Indicamos el estado final para la última palabra
+    indicarEstado(estado);
 
     return 0;
 }
+
