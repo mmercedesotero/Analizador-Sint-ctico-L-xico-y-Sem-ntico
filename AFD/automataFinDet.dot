@@ -21,9 +21,8 @@ digraph AFD {
   QDec -> QERROR [label="λ"];
   // QCer
   QCer->QOct [label="1-7"];
-  QCer->QHex [label="8-9"];
   QCer->QOx  [label="Xx"];
-  QCer->QHex [label="A-F/a-f"];
+  QCer->QHex [label="8-9,A-F/a-f"];
   QCer -> QERROR [label="λ"];
   // QOx
   QOx->QHex [label="0,1-7,8-9,A-F/a-f"];
