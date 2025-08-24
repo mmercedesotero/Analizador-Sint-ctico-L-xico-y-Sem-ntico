@@ -9,7 +9,7 @@ digraph AFD {
   QOct   [label="QOct", shape=doublecircle];
   QHex   [label="QHex", shape=doublecircle];
   QERROR  [label="ERROR", shape=doublecircle];
-
+  //// ACLARACION TODO CAMBIO DE ESTADO QUE TIENE "," INDICA QUE n>1  DE CAMBIOS DE ESTADOS 
   inicio [shape=point];
   inicio -> Q0;
   // Q0
