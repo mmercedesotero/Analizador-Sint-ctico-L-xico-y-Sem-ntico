@@ -6,7 +6,7 @@ digraph AFD {
   Q0     [label="Q0\n Inicio"];
   QDec   [label="QDec", shape=doublecircle];
   QCer   [label="QCer", shape=doublecircle];
-  QOx    [label="QOx", shape=doublecircle];
+  QOx    [label="QOx", ];
   QOct   [label="QOct", shape=doublecircle];
   QHex   [label="QHex", shape=doublecircle];
   QERROR  [label="ERROR"];
