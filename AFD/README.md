@@ -1,22 +1,23 @@
 ## Tabla de transiciones del AFD
 
-| Estado actual | Entrada         | Siguiente estado |
+| Estado actual | Entrada        |Siguiente estado |
 |:-------------:|:---------------|:---------------:|
-| Q0            | 1-9            | Q1              |
-| Q0            | 0              | Q2              |
-| Q0            | x/X, a-f/A-F   | ERROR           |
+| Q0            | 1-7,8-9        | QDec            |
+| Q0            | 0              | QCer            |
 | Q0            | otro           | ERROR           |
-| Q1            | 0-9            | Q1              |
-| Q1            | otro           | ERROR           |
-| Q2            | 0              | Q2              |
-| Q2            | 1-7            | Q3              |
-| Q2            | 8-9            | ERROR           |
-| Q2            | x/X            | Q4              |
-| Q2            | a-f/A-F, otro  | ERROR           |
-| Q3            | 0-7            | Q3              |
-| Q3            | otro           | ERROR           |
-| Q4            | 0-9, a-f/A-F   | Q5              |
-| Q4            | otro           | ERROR           |
-| Q5            | 0-9, a-f/A-F   | Q5              |
+| QDec          | 0,1-7,8-9      | QDec            |
+| QDec          | otro           | ERROR           |
+| QCer          | 1-7            | QOct            |
+| QCer          | x/X            | QOx             |
+| QCer          | 8-9,A-F/a-f    | QHex            |
+| QCer          | otro           | ERROR           |
+| QOx           | 0-9,A-F/a-f    | QHex            |
+| QOx           | otro           | ERROR           |
+| QOct          | 8-9,A-F/a-f    | QHex            |
+| QOct          | 0,1-7          | QOct            |
+| QOct          | otro           | ERROR           |
+| QHex          | 0-9,A-F/a-f    | QHex            |
+| QHex          | otro           | ERROR           |
+| ERROR         | otro           | ERROR           |
 
 ![AFD](automata.png)
