@@ -19,4 +19,4 @@
 | Q4            | otro           | ERROR           |
 | Q5            | 0-9, a-f/A-F   | Q5              |
 
-![AFD](afd.png)
+![AFD](automata.png)
