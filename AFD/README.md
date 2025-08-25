@@ -4,7 +4,7 @@
 * Toto Leandro
 * Vallazza Luca Danilo
 * Istepanoglu Tiziana 
-* 
+* Paye Michael
 
 ## Tabla de transiciones del AFD
 
