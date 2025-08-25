@@ -1,3 +1,11 @@
+# Grupo 01 - K2151
+## Integrantes 
+* Otero Mercedes 
+* Toto Leandro
+* Vallazza Luca Danilo
+* Istepanoglu Tiziana 
+* 
+
 ## Tabla de transiciones del AFD
 
 | Estado actual | Entrada        |Siguiente estado |
