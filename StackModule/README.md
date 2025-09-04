@@ -101,3 +101,12 @@ Se pueden crear los .exe correspondiente a los distintos tipos de Stack segun se
 * `` make StackModuleLinkedDynamic  `` para crear el .exe del Linked Dynamic
 * `` make StackModuleContiguousStatic  `` para crear el .exe del Contiguous Static
 
+# Correciones entrega TP1:
+
+* Se eliminaron los .exe del repositorio y se agregó .gitignore.
+* Se agregaron printf en los tests para identificar qué función se está ejecutando.
+* Se corrigió el uso de assert para que no esté dentro de un if, asegurando que los tests realmente validen condiciones.
+* Se separaron los benchmarks en archivos independientes (benchmark_static.c y benchmark_dynamic.c) como corresponde, evitando que estén mezclados con la implementación.
+* Se refactorizó el stack para que sea un tipo de dato (struct Stack), permitiendo múltiples instancias en lugar de una única pila global.
+* Se modificó el Makefile con el objetivo de automatizar la compilación de los distintos módulos del proyecto.
+* Se actualizaron los tests y benchmarks para trabajar con estas nuevas instancias.
