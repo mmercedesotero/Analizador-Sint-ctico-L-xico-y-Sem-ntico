@@ -3,42 +3,22 @@
 
 #include <stdbool.h>
 
+#define STACK_SIZE 10 // Definimos el tamaño del stack aca para no agregarlo en cada archivo
+#define ITERATIONS 20
+
 typedef int StackItem;
 
-/*
- * Inicializa el stack
- * Pre: -
- * Post: el stack está vacío
- */
-void StackInit(void);
+typedef struct {
+    StackItem datos[STACK_SIZE]; // para versión estática
+    int tope;
+} Stack;
 
-/*
- * Inserta un elemento en el tope del stack
- * Pre: el stack no está lleno (IsFull() == false)
- * Post: el elemento x está en el tope del stack
- */
-void StackPush(StackItem x);
 
-/*
- * Saca y devuelve el elemento del tope del stack
- * Pre: el stack no está vacío (IsEmpty() == false)
- * Post: el elemento del tope es removido y devuelto
- */
-StackItem StackPop(void);
-
-/*
- * Indica si el stack está vacío
- * Pre: -
- * Post: devuelve true si el stack está vacío, false en caso contrario
- */
-bool StackIsEmpty(void);
-
-/*
- * Indica si el stack está lleno.
- * Pre: ninguna.
- * Post: devuelve true si el stack está lleno, false en caso contrario.
- */
-bool StackIsFull(void);
+void StackInit(Stack* s);
+void StackPush(Stack* s, StackItem x);
+StackItem StackPop(Stack* s);
+bool StackIsEmpty(Stack* s);
+bool StackIsFull(Stack* s);
 
 
 #endif // STACKMODULE_H
