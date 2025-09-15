@@ -12,6 +12,11 @@
     #define CONST_CARACTER 8
     #define ERROR 9
 %}
+DIGITO_DECIMAL [0-9]
+DIGITO_OCTAL [0-7]
+DIGITO_HEXADECIMAL [0-9a-fA-F]
+LETRAS [a-zA-Z_]
+LETRAS_Y_DIGITOS_AFTER [a-zA-Z0-9_]
 %%
 "int"|"double"|"float"|"char"|"unsigned"|"unsigned int" { 
     printf("Tipo de dato: %s\n", yytext); 
@@ -23,16 +28,16 @@
     return STRUC_CONTROL;
 }
 
-[a-zA-Z_][a-zA-Z0-9_]* {
+{LETRAS}{LETRAS_Y_DIGITOS_AFTER}* {
     printf("Identificador: %s\n", yytext);
     return IDENTIFICADOR;
 }
 
-0[0-7]+ {
+0{DIGITO_OCTAL}+ {
     printf("Constante entera octal: %s\n", yytext);
     return CONST_OCTAL;
 }
-0[xX][0-9a-fA-F]+ {
+0[xX]{DIGITO_HEXADECIMAL}+ {
     printf("Constante entera hexadecimal: %s\n", yytext);
     return CONST_HEXADECIMAL;
 }
@@ -41,12 +46,12 @@
     return CONST_CARACTER;
 }
 
-[0-9]+\.[0-9]+ {
+{DIGITO_DECIMAL}+\.{DIGITO_DECIMAL}+ {
     printf("Constante real: %s\n", yytext);
     return CONST_REAL;
 }
 
-[0-9]+ {
+{DIGITO_DECIMAL}+ {
     printf("Constante entera: %s\n", yytext);
     return CONST_ENTERA;
 }
@@ -56,7 +61,7 @@
     return '"';
 }
 
-[0-9]+[a-zA-Z_][a-zA-Z0-9_]* {
+{DIGITO_DECIMAL}+{LETRAS}{LETRAS_Y_DIGITOS_AFTER}* {
     printf("Error lexico - identificador invalido (empieza con numero): %s\n", yytext);
     return ERROR; 
 }
