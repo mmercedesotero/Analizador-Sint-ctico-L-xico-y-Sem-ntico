@@ -8,7 +8,7 @@ analizador.exe: lex.yy.c
 lex.yy.c: declaracion.l
 	win_flex declaracion.l
 
-#esto sirve para cuando hagas make, use los files de prubea y te los muestre
+# esto sirve para cuando hagas make, use los files de prueba y te los muestre
 run-tests: analizador.exe
 	@echo "=== Testeo valido ==="
 	powershell -Command "Get-Content test_valido.c | .\analizador.exe"
@@ -19,4 +19,4 @@ run-tests: analizador.exe
 
 clean:
 	-del /Q analizador.exe lex.yy.c *.o 2>nul
-# esto esta asi porqeu agregamos el run-tests y no hacia el clean correcto
+# esto esta asi porque agregamos el run-tests y no hacia el clean correcto
