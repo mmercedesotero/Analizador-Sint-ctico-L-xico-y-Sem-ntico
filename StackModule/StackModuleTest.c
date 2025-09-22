@@ -2,46 +2,51 @@
 #include <stdio.h>
 #include "StackModule.h"
 
-void testStackInitEmpty() { // Test de stack si está vacío después de la inicialización
-    StackInit();
-    assert(StackIsEmpty());
-    assert(!StackIsFull());
+void testStackInitEmpty() {
+    Stack pila;
+    StackInit(&pila);
+    assert(StackIsEmpty(&pila));
+    assert(!StackIsFull(&pila));
 }
 
-void testStackPushPop() { // Test de stack si puede insertar y eliminar un elemento 
-    StackInit();
-    StackPush(15); 
-    assert(!StackIsEmpty());
-    assert(StackPop() == 15);
-    assert(StackIsEmpty());
+void testStackPushPop() {
+    Stack pila;
+    StackInit(&pila);
+    StackPush(&pila, 15); 
+    assert(!StackIsEmpty(&pila));
+    assert(StackPop(&pila) == 15);
+    assert(StackIsEmpty(&pila));
 }
 
-void testStackFull() { // Test de stack si está lleno después de insertar elementos
-    StackInit();
-    // Suponemos que el stack tiene tamaño 3 
-    StackPush(1);
-    StackPush(2);
-    StackPush(3);
-    if (StackIsFull()) {
-        assert(StackIsFull());
-    }
+void testStackFull() {
+    Stack pila;
+    StackInit(&pila);
+    StackPush(&pila, 1);
+    StackPush(&pila, 2);
+    StackPush(&pila, 3);
+    assert(StackIsFull(&pila));
 }
 
-void testStackLifo() { // Test de stack si utiliza el comportamiento LIFO del stack
-    StackInit();
-    StackPush(10);
-    StackPush(20);
-    StackPush(30);
-    assert(StackPop() == 30);
-    assert(StackPop() == 20);
-    assert(StackPop() == 10);
-    assert(StackIsEmpty());
+void testStackLifo() {
+    Stack pila;
+    StackInit(&pila);
+    StackPush(&pila, 10);
+    StackPush(&pila, 20);
+    StackPush(&pila, 30);
+    assert(StackPop(&pila) == 30);
+    assert(StackPop(&pila) == 20);
+    assert(StackPop(&pila) == 10);
+    assert(StackIsEmpty(&pila));
 }
 
 int main() {
+    printf("Corriendo testStackInitEmpty...\n");
     testStackInitEmpty();
+    printf("Corriendo testStackPushPop...\n");
     testStackPushPop();
+    printf("Corriendo testStackFull...\n");
     testStackFull();
+    printf("Corriendo testStackLifo...\n");
     testStackLifo();
     printf("Todos los tests pasaron correctamente.\n");
     return 0;
