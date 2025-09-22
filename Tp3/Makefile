@@ -1,4 +1,18 @@
-.PHONY: all clean run-tests 
+ifeq ($(OS),Windows_NT)
+    FLEX = win_flex
+    RM = del /Q
+    CAT = type
+    PIPE = powershell -Command "Get-Content"
+    EXE = .\analizador.exe
+else
+    FLEX = flex
+    RM = rm -f
+    CAT = cat
+    PIPE = cat
+    EXE = ./analizador.exe
+endif
+
+.PHONY: all clean run-tests
 
 all: analizador.exe run-tests
 
@@ -6,17 +20,16 @@ analizador.exe: lex.yy.c
 	gcc lex.yy.c -o analizador.exe
 
 lex.yy.c: declaracion.l
-	win_flex declaracion.l
+	$(FLEX) declaracion.l
 
-# esto sirve para cuando hagas make, use los files de prueba y te los muestre
 run-tests: analizador.exe
 	@echo "=== Testeo valido ==="
-	powershell -Command "Get-Content test_valido.c | .\analizador.exe"
+	$(PIPE) test_valido.c | $(EXE)
 	@echo ""
 	@echo "=== Testeo invalido ==="
-	type test_error.c | .\analizador.exe
+	$(CAT) test_error.c | $(EXE)
 	@echo "=== Tests completados ==="
 
 clean:
-	-del /Q analizador.exe lex.yy.c *.o 2>nul
-# esto esta asi porque agregamos el run-tests y no hacia el clean correcto
+	$(RM) analizador.exe lex.yy.c *.o
+	
