@@ -26,7 +26,7 @@ test-valido: all
 all: recuperacion
 
 recuperacion: lex.yy.o bison.tab.o
-	gcc lex.yy.o bison.tab.o -o recuperacion -ll
+	gcc lex.yy.o bison.tab.o -o recuperacion
 
 lex.yy.o: lex.yy.c bison.tab.h
 	gcc -c lex.yy.c
@@ -37,7 +37,13 @@ bison.tab.o: bison.tab.c
 lex.yy.c: declaracionCopia.l
 	$(FLEX) declaracionCopia.l
 
-DEBUG_STAMP := .debug_$(DEBUG)
+$(DEBUG_STAMP):
+	$(RM_DEBUG)
+ifeq ($(OS),Windows_NT)
+	echo. > $@
+else
+	touch $@
+endif
 
 bison.tab.c bison.tab.h: bison.y $(DEBUG_STAMP)
 ifneq ($(DEBUG),0)
