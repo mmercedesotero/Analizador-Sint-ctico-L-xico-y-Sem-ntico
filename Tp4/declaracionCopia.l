@@ -107,7 +107,8 @@ LETRAS_Y_DIGITOS_AFTER [a-zA-Z0-9_]
     return ';';
 }
 [" "\t] {
-    printf("Caracter: espacio o tabulacion\n");
+    // comentamos los espacios y tabulaciones para no ensuciar tanto la consola 
+    //printf("Caracter: espacio o tabulacion\n");
     actualizarLocationsColumnas();
 }
 "\n" {
