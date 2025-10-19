@@ -5,3 +5,6 @@ bison.tab.c
 bison.tab.h
 bison.tab.o
 bison.output
+*.o
+bison.tab.*
+lex.yy.*
