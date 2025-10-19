@@ -1,1 +1,5 @@
 *.exe
+lex.yy.c
+bison.tab.c
+bison.tab.h
+bison.output
