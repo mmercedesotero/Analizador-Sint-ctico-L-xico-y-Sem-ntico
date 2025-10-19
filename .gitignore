@@ -1,5 +1,7 @@
 *.exe
 lex.yy.c
+lex.yy.o
 bison.tab.c
 bison.tab.h
+bison.tab.o
 bison.output
