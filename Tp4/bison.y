@@ -62,7 +62,7 @@ listaTopLevel: /* vacío */
             | listaTopLevel sentencia
             ;
 
-// Declaraciones FUNCIONA
+            // Declaraciones FUNCIONA
 listaDeclaracionesop:
             /* vacío */
             | listaDeclaraciones
@@ -178,7 +178,7 @@ sentIteracion:
             ;
 
 sentSalto: RETURN expresionop ';'
-            ;
+           ;
 
 //Expresiones
 
@@ -337,7 +337,7 @@ nombreTipo:  TIPO_DATO
 %%
 
 int yyerror(const char *mensaje) {
-    fprintf(stderr, "Error sintáctico <línea:%d columna:[%d:%d]> %s\n",
+    fprintf(stderr, "Error sintactico <linea:%d columna:[%d:%d]> %s\n",
             yylloc.first_line, yylloc.first_column, yylloc.last_column - 1, mensaje);
     return 0;
 }
@@ -361,7 +361,7 @@ int main(int argc, char *argv[]) {
     int resultado = yyparse();
 
     if (resultado == 0 && errorCount == 0)
-        fprintf(stdout, "El archivo %s es válido\n", argv[1]);
+        fprintf(stdout, "El archivo %s es valido\n", argv[1]);
     else
         fprintf(stdout, "El archivo %s contiene %d errores\n", argv[1], errorCount);
 

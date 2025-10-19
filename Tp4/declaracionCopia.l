@@ -107,32 +107,28 @@ LETRAS_Y_DIGITOS_AFTER [a-zA-Z0-9_]
     return ';';
 }
 [" "\t] {
-    printf("Caracter: espacio o tabulación\n");
+    printf("Caracter: espacio o tabulacion\n");
     actualizarLocationsColumnas();
 }
 "\n" {
-    printf("Caracter: nueva línea\n");
+    printf("Caracter: nueva linea\n");
     actualizarLocationsNuevaFila();
 }
 [^ \t\n] {
     actualizarLocationsColumnas();
-    fprintf(stderr, "Error léxico <linea:%d columna:%d> Caracter no válido: '%s'\n", yylloc.first_line, yylloc.first_column, yytext);
+    fprintf(stderr, "Error lexico <linea:%d columna:%d> Caracter no valido: '%s'\n", yylloc.first_line, yylloc.first_column, yytext);
     errorCount++;
     BEGIN(tokenNoReconocido);
 }
 <tokenNoReconocido>{
-    <<EOF>> {
-        fprintf(stderr, "EOF\n");
-        BEGIN(INITIAL);
-    }
     " "|\t|\n {
         yyless(0); // devuelvo el caracter a yyin
-        fprintf(stderr, "a continuación hay un espacio o tabulación o salto de línea\n");
+        fprintf(stderr, "a continuacion hay un espacio o tabulacion o salto de linea\n");
         BEGIN(INITIAL);
     }
     [^ \t\n]+ {
         actualizarLocationsColumnas();
-        fprintf(stderr, "Error léxico <linea:%d columna:%d> Secuencia no válida: %s (a continuación del caracter no válido)\n", yylloc.first_line, yylloc.first_column, yytext);
+        fprintf(stderr, "Error lexico <linea:%d columna:%d> Secuencia no valida: %s (a continuacion del caracter no valido)\n", yylloc.first_line, yylloc.first_column, yytext);
         BEGIN(INITIAL);
     }
 }
