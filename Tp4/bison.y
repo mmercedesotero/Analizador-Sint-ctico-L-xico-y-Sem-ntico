@@ -60,7 +60,6 @@ programa: listaTopLevel {
 listaTopLevel: /* vacío */
             | listaTopLevel declaracion
             | listaTopLevel sentencia
-            | listaTopLevel funcion
             ;
 
 // Declaraciones FUNCIONA
@@ -180,12 +179,6 @@ sentIteracion:
 
 sentSalto: RETURN expresionop ';'
             ;
-
-funcion:
-    TIPO_DATO IDENTIFICADOR '(' ')' sentCompuesta {
-        printf("Se reconocio una declaracion de funcion: %s\n", $2);
-    }
-    ;
 
 //Expresiones
 
