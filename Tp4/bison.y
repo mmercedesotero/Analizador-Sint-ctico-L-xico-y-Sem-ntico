@@ -361,7 +361,7 @@ int main(int argc, char *argv[]) {
     int resultado = yyparse();
 
     if (resultado == 0 && errorCount == 0)
-        fprintf(stdout, "El archivo %s es válido\n", argv[1]);
+        fprintf(stdout, "El archivo %s es valido\n", argv[1]);
     else
         fprintf(stdout, "El archivo %s contiene %d errores\n", argv[1], errorCount);
 
