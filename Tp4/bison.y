@@ -375,7 +375,7 @@ nombreTipo:  TIPO_DATO
 %%
 
 int yyerror(const char *mensaje) {
-    fprintf(stderr, "Error sintáctico <línea:%d columna:[%d:%d]> %s\n",
+    fprintf(stderr, "Error sintactico <linea:%d columna:[%d:%d]> %s\n",
             yylloc.first_line, yylloc.first_column, yylloc.last_column - 1, mensaje);
     return 0;
 }
