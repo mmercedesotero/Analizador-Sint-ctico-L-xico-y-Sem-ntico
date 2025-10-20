@@ -21,14 +21,13 @@ int errorCount = 0;
     char* str;
     int num;
     float real;
-}
-
+};
 %token <str> TIPO_DATO IDENTIFICADOR LITERAL_CADENA
 %token <num> CONST_ENTERA
 %token <real> CONST_REAL
 %token CONST_OCTAL CONST_HEXADECIMAL CONST_CARACTER
 
-%token IF ELSE WHILE FOR RETURN SWITCH BREAK CONTINUE DO SIZEOF
+%token IF ELSE WHILE FOR RETURN SWITCH BREAK CONTINUE DO SIZEOF CASE DEFAULT
 %token IGUAL DISTINTO MAYOR_IGUAL MENOR_IGUAL AND OR 
 %token INCREMENTO DECREMENTO ASIGNACION MAS_IGUAL
 
@@ -45,7 +44,7 @@ int errorCount = 0;
 %left '<' '>' MENOR_IGUAL MAYOR_IGUAL
 %left IGUAL DISTINTO
 %left AND OR
-%right '=' MAS_IGUAL
+%right ASIGNACION MAS_IGUAL
 %right '?'
 
 %%
@@ -66,17 +65,16 @@ listaTopLevel: /* vacío */
 listaDeclaracionesop:
             /* vacío */
             | listaDeclaraciones
-        ;
+            ;
 
 listaSentenciasop:
             /* vacío */
             | listaSentencias
-        ;
+            ;
         
-listaDeclaraciones:
-            declaracion
+listaDeclaraciones: declaracion
             | listaDeclaraciones declaracion
-        ;
+            ;
 
 declaracion: declaVarSimples {
                 printf("Se reconocio la declaracion: %s\n", $1);
@@ -87,7 +85,7 @@ declaracion: declaVarSimples {
             
 
 declaVarSimples: TIPO_DATO listaVarSimples ';' {
-                char* temp = malloc(strlen($1) + strlen($2) + 3); // tipo + espacio + lista + ;
+                char* temp = malloc(strlen($1) + strlen($2) + 3); 
                 sprintf(temp, "%s %s;", $1, $2);
                 $$ = temp;
                 free($1);
@@ -100,7 +98,7 @@ listaVarSimples: unaVarSimple {
                 free($1);
             }
             | listaVarSimples ',' unaVarSimple {
-                char* temp = malloc(strlen($1) + strlen($3) + 3); // ", " y '\0'
+                char* temp = malloc(strlen($1) + strlen($3) + 3); 
                 sprintf(temp, "%s, %s", $1, $3);
                 free($1);
                 free($3);
@@ -127,7 +125,7 @@ inicializacion_op:
             ;
 
 inicializacion: ASIGNACION expresion {
-            char* temp = malloc(strlen($2) + 4); // " = valor" + '\0'
+            char* temp = malloc(strlen($2) + 4); 
             sprintf(temp, " = %s", $2);
             $$ = temp;
             free($2);
@@ -137,15 +135,16 @@ inicializacion: ASIGNACION expresion {
 
 // Sentencias
 sentencia:
-            sentCompuesta
+            setCompuesta
             | sentExpresion
             | sentSeleccion
             | sentIteracion
+            | sentSwitch
             | sentSalto
             | error ';' { yyerrok; }
             ;
 
-sentCompuesta:
+setCompuesta:
             '{' listaDeclaracionesop listaSentenciasop '}' 
             ;
 
@@ -154,31 +153,67 @@ listaSentencias: sentencia
             ;
 
 sentExpresion: expresionop ';'
+            ;
 
 sentSeleccion:
             IF '(' expresion ')' sentencia {
-                printf("Se reconocio una sentencia if sin else.\n");
+                printf("Se reconocio una sentencia IF sin ELSE.\n");
             }
             | IF '(' expresion ')' sentencia ELSE sentencia {
-                printf("Se reconocio una sentencia if con else.\n");
+                printf("Se reconocio una sentencia IF con ELSE.\n");
             }
             ;
 
 
 sentIteracion: 
             WHILE '(' expresion ')' sentencia {
-                printf("Se reconocio una sentencia while.\n");
+                printf("Se reconocio una sentencia WHILE.\n");
             }
             | DO sentencia WHILE '(' expresion ')' ';' {
                 printf("Se reconocio una sentencia DO y WHILE.\n");
             }
-            | FOR '(' expresionop ';' expresionop ';' expresionop ')' sentencia {
+            | FOR '(' forInit ';' expresionop ';' expresionop ')' sentencia {
                 printf("Se reconocio una sentencia FOR.\n");
             }
             ;
 
-sentSalto: RETURN expresionop ';'
+forInit:
+            declaracionFor
+            | expresionop
             ;
+
+declaracionFor:
+            TIPO_DATO listaVarSimples {
+                free($1);
+                free($2);
+            }
+            ;
+
+sentSwitch: SWITCH '(' expresion ')' '{' listaCases '}' {
+                printf("Se reconocio una sentencia SWITCH.\n");
+            }
+            ;
+
+listaCases: listaCases caseSentencia
+            | caseSentencia
+            ;
+
+caseSentencia: CASE CONST_ENTERA ':' sentencia
+            | DEFAULT ':' sentencia
+            ;
+
+sentSalto:
+            RETURN expresionop ';' {
+                printf("Se reconocio una sentencia de RETURN.\n");
+            }
+            | BREAK ';' {
+                printf("Se reconocio una sentencia BREAK.\n");
+            }
+            | CONTINUE ';' {
+                printf("Se reconocio una sentencia CONTINUE.\n");
+            }
+            ;
+
 
 //Expresiones
 
@@ -191,7 +226,10 @@ expresion: expAsignacion
             ;
 
 expAsignacion: expCondicional    
-            | expUnaria operAsignacion expAsignacion  
+            | IDENTIFICADOR operAsignacion expresion {
+                $$ = strdup("asignacion compuesta");
+            }
+            | expUnaria operAsignacion expAsignacion
             ;
 
 operAsignacion:   ASIGNACION

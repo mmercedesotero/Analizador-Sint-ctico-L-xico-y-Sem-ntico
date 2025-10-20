@@ -43,7 +43,9 @@ LETRAS_Y_DIGITOS_AFTER [a-zA-Z0-9_]
 "break"     { yylval.str = strdup(yytext); return BREAK; }
 "continue"  { yylval.str = strdup(yytext); return CONTINUE; }
 "do"        { yylval.str = strdup(yytext); return DO;} 
-"sizeof"    { return SIZEOF; } 
+"sizeof"    { yylval.str = strdup(yytext);return SIZEOF; } 
+"case"      { yylval.str = strdup(yytext);return CASE;}
+"default"   { yylval.str = strdup(yytext);return DEFAULT;}
 
 0{DIGITO_OCTAL}+ {
     return CONST_OCTAL;
@@ -73,6 +75,7 @@ LETRAS_Y_DIGITOS_AFTER [a-zA-Z0-9_]
 "{" { return '{'; }
 "}" { return '}'; }
 ";" { return ';'; }
+":" { return ':'; }
 "=" { return ASIGNACION; }
 "*" { return '*'; }
 "-" { return '-'; }
@@ -102,7 +105,6 @@ LETRAS_Y_DIGITOS_AFTER [a-zA-Z0-9_]
 
 
 ";" {
-    printf("Caracter: ;\n");
     actualizarLocationsColumnas();
     return ';';
 }
@@ -112,7 +114,6 @@ LETRAS_Y_DIGITOS_AFTER [a-zA-Z0-9_]
     actualizarLocationsColumnas();
 }
 "\n" {
-    printf("Caracter: nueva linea\n");
     actualizarLocationsNuevaFila();
 }
 [^ \t\n] {
