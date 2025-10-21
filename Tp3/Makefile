@@ -32,4 +32,3 @@ run-tests: analizador.exe
 
 clean:
 	$(RM) analizador.exe lex.yy.c *.o
-	

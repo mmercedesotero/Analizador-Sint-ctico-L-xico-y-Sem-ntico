@@ -1,0 +1,16 @@
+# Archivos generados por Bison
+bison.tab.c
+bison.tab.h
+
+# Archivos generados por Flex
+lex.yy.c
+
+# Archivos objeto de compilación
+*.o
+
+# Ejecutables
+recuperacion
+recuperacion.exe
+
+# Archivos de depuración temporales
+.debug_*

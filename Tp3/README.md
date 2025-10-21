@@ -1,7 +1,7 @@
 # Trabajo Práctico N°3
 # Grupo 01 - K2151
 ## Integrantes 
-* Otero Mercedes 
+* Otero María Mercedes 
 * Toto Leandro
 * Vallazza Luca Danilo
 * Istepanoglu Tiziana 
