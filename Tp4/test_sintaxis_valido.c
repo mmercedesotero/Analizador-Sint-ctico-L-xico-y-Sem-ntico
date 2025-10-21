@@ -4,7 +4,6 @@ int hexadecimal = 0x5;
 float real = 3.14;
 double enteraDecimal = 999999999109999;
 char c = 'a';
-unsigned int ui = 100;
 float temperatura = 36.5;
 int comparacion,x = 10;
 x += 5;

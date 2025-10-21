@@ -5,12 +5,15 @@
 #include <string.h>
 #include <stdlib.h>
 
-extern int yylex();
-int yyerror(const char *mensaje);  
+int yyerror(const char *s);
 int yywrap() { return 1; }
 
 extern FILE *yyin;
-int errorCount = 0;
+int erroresSintacticos = 0;
+int erroresLexicos = 0;
+
+int yylex(void);
+extern int yylineno;
 %}
 
 %define parse.error verbose
@@ -337,7 +340,7 @@ expPrimaria:
                 sprintf($$, "(%s)", $2);
                 free($2);
             }
-             ;
+            ;
 
 
 constante:
@@ -374,13 +377,16 @@ nombreTipo:  TIPO_DATO
 
 %%
 
-int yyerror(const char *mensaje) {
+int yyerror(const char *s) {
+    erroresSintacticos++;
     fprintf(stderr, "Error sintactico <linea:%d columna:[%d:%d]> %s\n",
-            yylloc.first_line, yylloc.first_column, yylloc.last_column - 1, mensaje);
+            yylloc.first_line, yylloc.first_column, yylloc.last_column - 1, s);
     return 0;
 }
 
 int main(int argc, char *argv[]) {
+
+    
 #if YYDEBUG
     yydebug = 1;
 #endif
@@ -398,10 +404,10 @@ int main(int argc, char *argv[]) {
 
     int resultado = yyparse();
 
-    if (resultado == 0 && errorCount == 0)
-        fprintf(stdout, "El archivo %s es valido\n", argv[1]);
-    else
-        fprintf(stdout, "El archivo %s contiene %d errores\n", argv[1], errorCount);
+    int totalErrores = erroresSintacticos + erroresLexicos;
+    if (resultado == 0 && totalErrores == 0)
+        fprintf(stdout, "El archivo %s es valido, no se encontraron errores\n", argv[1]);
+    fprintf(stdout, "\nAnalisis terminado. Errores totales: %d (sintacticos: %d, lexicos: %d)\n", totalErrores, erroresSintacticos, erroresLexicos);
 
     return 0;
 }

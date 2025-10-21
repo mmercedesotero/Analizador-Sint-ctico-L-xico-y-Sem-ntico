@@ -2,6 +2,7 @@
 
 %{
     #include <stdlib.h>
+    #include <stdio.h>
     #include "bison.tab.h"
     #include <string.h>
 
@@ -16,7 +17,7 @@ void actualizarLocationsColumnas() {
     yylloc.last_column += yyleng;
 }
 
-extern int errorCount;
+extern int erroresLexicos;
 %}
 
 
@@ -34,33 +35,38 @@ LETRAS_Y_DIGITOS_AFTER [a-zA-Z0-9_]
     return TIPO_DATO; 
 }
 
-"if"        { yylval.str = strdup(yytext); return IF; }
-"else"      { yylval.str = strdup(yytext); return ELSE; }
-"while"     { yylval.str = strdup(yytext); return WHILE; }
-"for"       { yylval.str = strdup(yytext); return FOR; }
-"return"    { yylval.str = strdup(yytext); return RETURN; }
-"switch"    { yylval.str = strdup(yytext); return SWITCH; }
-"break"     { yylval.str = strdup(yytext); return BREAK; }
-"continue"  { yylval.str = strdup(yytext); return CONTINUE; }
-"do"        { yylval.str = strdup(yytext); return DO;} 
-"sizeof"    { yylval.str = strdup(yytext);return SIZEOF; } 
-"case"      { yylval.str = strdup(yytext);return CASE;}
-"default"   { yylval.str = strdup(yytext);return DEFAULT;}
+"if"        { actualizarLocationsColumnas(); yylval.str = strdup(yytext); return IF; }
+"else"      { actualizarLocationsColumnas(); yylval.str = strdup(yytext); return ELSE; }
+"while"     { actualizarLocationsColumnas(); yylval.str = strdup(yytext); return WHILE; }
+"for"       { actualizarLocationsColumnas(); yylval.str = strdup(yytext); return FOR; }
+"return"    { actualizarLocationsColumnas(); yylval.str = strdup(yytext); return RETURN; }
+"switch"    { actualizarLocationsColumnas(); yylval.str = strdup(yytext); return SWITCH; }
+"break"     { actualizarLocationsColumnas(); yylval.str = strdup(yytext); return BREAK; }
+"continue"  { actualizarLocationsColumnas(); yylval.str = strdup(yytext); return CONTINUE; }
+"do"        { actualizarLocationsColumnas(); yylval.str = strdup(yytext); return DO;} 
+"sizeof"    { actualizarLocationsColumnas(); yylval.str = strdup(yytext);return SIZEOF; } 
+"case"      { actualizarLocationsColumnas(); yylval.str = strdup(yytext);return CASE;}
+"default"   { actualizarLocationsColumnas(); yylval.str = strdup(yytext);return DEFAULT;}
 
 0{DIGITO_OCTAL}+ {
+    actualizarLocationsColumnas();
     return CONST_OCTAL;
 }
 0[xX]{DIGITO_HEXADECIMAL}+ {
+    actualizarLocationsColumnas();
     return CONST_HEXADECIMAL;
 }
 '(\\.|[^\\'])' {
+    actualizarLocationsColumnas();
     return CONST_CARACTER;
 }
 {DIGITO_DECIMAL}+\.{DIGITO_DECIMAL}+ {
+    actualizarLocationsColumnas();
     yylval.real = atof(yytext);
     return CONST_REAL;
 }
 {DIGITO_DECIMAL}+ {
+    actualizarLocationsColumnas();
     yylval.num = atoi(yytext);
     return CONST_ENTERA;
 }
@@ -70,44 +76,40 @@ LETRAS_Y_DIGITOS_AFTER [a-zA-Z0-9_]
     yylval.str = strdup(yytext);
     return IDENTIFICADOR;
 }
-"(" { return '('; }
-")" { return ')'; }
-"{" { return '{'; }
-"}" { return '}'; }
-";" { return ';'; }
-":" { return ':'; }
-"=" { return ASIGNACION; }
-"*" { return '*'; }
-"-" { return '-'; }
-"+" { return '+'; }
-"==" { return IGUAL; }
-"!=" { return DISTINTO; }
-"<" { return '<'; }
-">" { return '>'; }
-"<=" { return MENOR_IGUAL; }
-">=" { return MAYOR_IGUAL; }
-"+=" { return MAS_IGUAL; }
-"&&" { return AND; }
-"||" { return OR; }
-"," { return ','; }
-"." { return '.'; }
-"[" { return '['; }
-"]" { return ']'; }
-"++" { return INCREMENTO; }
-"--" { return DECREMENTO; }
-"/" { return '/'; }
-"%" { return '%'; }
-"&" { return '&'; }
-"!" { return '!'; }
+"(" { actualizarLocationsColumnas(); return '('; }
+")" { actualizarLocationsColumnas(); return ')'; }
+"{" { actualizarLocationsColumnas(); return '{'; }
+"}" { actualizarLocationsColumnas(); return '}'; }
+";" { actualizarLocationsColumnas(); return ';'; }
+":" { actualizarLocationsColumnas(); return ':'; }
+"=" { actualizarLocationsColumnas(); return ASIGNACION; }
+"*" { actualizarLocationsColumnas(); return '*'; }
+"-" { actualizarLocationsColumnas(); return '-'; }
+"+" { actualizarLocationsColumnas(); return '+'; }
+"==" { actualizarLocationsColumnas(); return IGUAL; }
+"!=" { actualizarLocationsColumnas(); return DISTINTO; }
+"<" { actualizarLocationsColumnas(); return '<'; }
+">" { actualizarLocationsColumnas(); return '>'; }
+"<=" { actualizarLocationsColumnas(); return MENOR_IGUAL; }
+">=" { actualizarLocationsColumnas(); return MAYOR_IGUAL; }
+"+=" { actualizarLocationsColumnas(); return MAS_IGUAL; }
+"&&" { actualizarLocationsColumnas(); return AND; }
+"||" { actualizarLocationsColumnas(); return OR; }
+"," { actualizarLocationsColumnas(); return ','; }
+"." { actualizarLocationsColumnas(); return '.'; }
+"[" { actualizarLocationsColumnas(); return '['; }
+"]" { actualizarLocationsColumnas(); return ']'; }
+"++" { actualizarLocationsColumnas(); return INCREMENTO; }
+"--" { actualizarLocationsColumnas(); return DECREMENTO; }
+"/" { actualizarLocationsColumnas(); return '/'; }
+"%" { actualizarLocationsColumnas(); return '%'; }
+"&" { actualizarLocationsColumnas(); return '&'; }
+"!" { actualizarLocationsColumnas(); return '!'; }
 
 
 
 
 
-";" {
-    actualizarLocationsColumnas();
-    return ';';
-}
 [" "\t] {
     // comentamos los espacios y tabulaciones para no ensuciar tanto la consola 
     //printf("Caracter: espacio o tabulacion\n");
@@ -119,7 +121,7 @@ LETRAS_Y_DIGITOS_AFTER [a-zA-Z0-9_]
 [^ \t\n] {
     actualizarLocationsColumnas();
     fprintf(stderr, "Error lexico <linea:%d columna:%d> Caracter no valido: '%s'\n", yylloc.first_line, yylloc.first_column, yytext);
-    errorCount++;
+    erroresLexicos++;
     BEGIN(tokenNoReconocido);
 }
 <tokenNoReconocido>{
