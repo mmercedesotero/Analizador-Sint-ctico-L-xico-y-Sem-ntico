@@ -19,7 +19,7 @@ void insertarSimbolo(char* nombre, char* tipo, char* valor, int linea) {
     tablaSimbolos[cantidadSimbolos].valor = strdup(valor);
     tablaSimbolos[cantidadSimbolos].linea = linea;
     cantidadSimbolos++;
-}
+} // CONTROL DOBLE DECLARACION
 
 int existeSimbolo(const char* nombre) {
     for (int i = 0; i < cantidadSimbolos; i++) {
@@ -40,7 +40,11 @@ void actualizarValor(const char* nombre, const char* nuevoValor, int linea) {
         }
     }
     printf("Error: variable '%s' usada sin declarar (linea %d)\n", nombre, linea);
-}
+} // CONTROL TIPO DE DATO
+
+
+
+
 
 void mostrarTabla() {
     printf("\nTabla de simbolos:\n");

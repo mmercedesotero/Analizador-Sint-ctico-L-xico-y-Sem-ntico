@@ -26,6 +26,7 @@ if (y < 5){
 int tam = sizeof(int);
 float tamReal = sizeof(float);
 
+
 while (x < 50) {
     x = x + 1;
 }
@@ -35,7 +36,7 @@ for (int h=0; h < 5; h++) {
 }
 
 if (real > 0){
-  break;
+  return;
 }
 switch (x){
   case 1:{
@@ -49,4 +50,9 @@ switch (x){
   default:{
     return x;
   }
+}
+
+int sumarDOS(int l, int o){
+  int result = l + o; 
+  return result; 
 }
