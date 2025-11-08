@@ -123,7 +123,10 @@ void actualizarValor(const char* nombre, const char* nuevoValor, int linea) {
         }
     }
     printf("Error semantico: variable '%s' usada sin declarar (linea %d)\n", nombre, linea);
+<<<<<<< HEAD
     erroresSemanticos++;
+=======
+>>>>>>> 6caf74b5989bc2ecf3a154db5f6dc321f198789f
 } // CONTROL TIPO DE DATO
 
 void mostrarTabla(const char* filename) {

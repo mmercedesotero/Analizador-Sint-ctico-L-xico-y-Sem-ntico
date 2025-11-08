@@ -381,9 +381,8 @@ expresionop:
                 $$ = strdup($3); 
             }
             | IDENTIFICADOR {
-                if (existeIdentificador($1) != ERR_OK) {
-                    printf("Error semantico: variable '%s' usada sin declarar (linea %d)\n", $1, @1.first_line);
-                    erroresSemanticos++;
+                if (!existeSimbolo($1)) {
+                    printf("Error: variable '%s' usada sin declarar (linea %d)\n", $1, @1.first_line);
                 }
                 $$ = strdup($1);
             }
@@ -784,12 +783,10 @@ listaArgumentos: expAsignacion
  
 expPrimaria:
 IDENTIFICADOR {
-                // Buscar el valor y tipo del identificador en la tabla de símbolos
-                if (existeIdentificador($1) != ERR_OK) {
-                    printf("Error semantico: variable '%s' usada sin declarar (linea %d)\n", $1, @1.first_line);
-                    erroresSemanticos++;
-                    $$.valor = strdup("0");
-                    $$.tipo = strdup("indef");
+                // Buscar el valor del identificador en la tabla de símbolos
+                if (!existeSimbolo($1)) {
+                    printf("Error: variable '%s' usada sin declarar (linea %d)\n", $1, @1.first_line);
+                    $$ = strdup("0");
                 } else {
                     char* valor = NULL;
                     char* tipo = NULL;
