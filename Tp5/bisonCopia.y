@@ -312,7 +312,7 @@ expresionop:
             }
             | IDENTIFICADOR {
                 if (!existeSimbolo($1)) {
-                    printf("Error: variable '%s' usada sin declarar (linea %d)\n", $1, @1.first_line);
+                    printf("Error semantico: variable '%s' usada sin declarar (linea %d)\n", $1, @1.first_line);
                 }
                 $$ = strdup($1);
             }
@@ -652,7 +652,7 @@ expPrimaria:
 IDENTIFICADOR {
                 // Buscar el valor del identificador en la tabla de símbolos
                 if (!existeSimbolo($1)) {
-                    printf("Error: variable '%s' usada sin declarar (linea %d)\n", $1, @1.first_line);
+                    printf("Error semantico: variable '%s' usada sin declarar (linea %d)\n", $1, @1.first_line);
                     $$ = strdup("0");
                 } else {
                     // Buscar el valor en la tabla

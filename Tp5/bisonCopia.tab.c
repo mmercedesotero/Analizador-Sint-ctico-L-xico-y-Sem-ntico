@@ -2074,7 +2074,7 @@ yyreduce:
 #line 313 "bisonCopia.y"
                             {
                 if (!existeSimbolo((yyvsp[0].str))) {
-                    printf("Error: variable '%s' usada sin declarar (linea %d)\n", (yyvsp[0].str), (yylsp[0]).first_line);
+                    printf("Error semantico: variable '%s' usada sin declarar (linea %d)\n", (yyvsp[0].str), (yylsp[0]).first_line);
                 }
                 (yyval.str) = strdup((yyvsp[0].str));
             }
@@ -2514,7 +2514,7 @@ yyreduce:
               {
                 // Buscar el valor del identificador en la tabla de símbolos
                 if (!existeSimbolo((yyvsp[0].str))) {
-                    printf("Error: variable '%s' usada sin declarar (linea %d)\n", (yyvsp[0].str), (yylsp[0]).first_line);
+                    printf("Error semantico: variable '%s' usada sin declarar (linea %d)\n", (yyvsp[0].str), (yylsp[0]).first_line);
                     (yyval.str) = strdup("0");
                 } else {
                     // Buscar el valor en la tabla

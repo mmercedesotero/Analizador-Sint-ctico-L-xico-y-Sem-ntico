@@ -59,3 +59,15 @@ int sumarDOS(int l, int o){
   result = l + o; 
   return result;
 }
+
+
+int sumar(int argumento1, int argumento2){
+  int resultado = argumento1 + argumento2;
+  return resultado;
+}
+
+void funcionVoid(){
+  return;
+}
+
+sumar(3+2);

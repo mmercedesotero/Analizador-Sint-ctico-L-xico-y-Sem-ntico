@@ -48,3 +48,14 @@ switch (x){
     return x;
   }
 }
+
+int sumar(int argumento1, int argumento2){
+  int resultado = argumento1 + argumento2;
+  return resultado;
+}
+
+void funcionVoid(){
+  return;
+}
+
+sumar(3+2);
