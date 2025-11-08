@@ -37,3 +37,25 @@ char doble = 'ab';
 if (x > 5){
     x = x + 1;
 }
+
+int j = 3;
+int j = 4;
+
+int n = 10;
+char n = 'H';
+
+int sumar(int a, int b) {
+    return a + b;
+}
+
+sumar("Jorge", 5);
+sumar(3, 4, 5);
+sumar(1);
+
+
+int g = 3 ;
+char q = 'a';
+
+int ff = g + q ;
+
+multiplicar(2);

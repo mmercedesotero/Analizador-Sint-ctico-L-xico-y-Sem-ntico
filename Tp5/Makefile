@@ -35,23 +35,23 @@ test: $(EXE_NAME) test-valido test-error
 
 test-error: $(EXE_NAME)
 ifeq ($(OS),Windows_NT)
-	@if exist test_sintaxis_error.c ( $(EXE) test_sintaxis_error.c ) else ( echo Skipping test-error: test_sintaxis_error.c not found )
+	@if exist test_error.c ( $(EXE) test_error.c ) else ( echo Skipping test-error: test_error.c not found )
 else
-	@if [ -f test_sintaxis_error.c ]; then \
-		$(EXE) test_sintaxis_error.c; \
+	@if [ -f test_error.c ]; then \
+		$(EXE) test_error.c; \
 	else \
-		echo "Skipping test-error: test_sintaxis_error.c not found"; \
+		echo "Skipping test-error: test_error.c not found"; \
 	fi
 endif
 
 test-valido: $(EXE_NAME)
 ifeq ($(OS),Windows_NT)
-	@if exist test_sintaxis_valido.c ( $(EXE) test_sintaxis_valido.c ) else ( echo Skipping test-valido: test_sintaxis_valido.c not found )
+	@if exist test_valido.c ( $(EXE) test_valido.c ) else ( echo Skipping test-valido: test_valido.c not found )
 else
-	@if [ -f test_sintaxis_valido.c ]; then \
-		$(EXE) test_sintaxis_valido.c; \
+	@if [ -f test_valido.c ]; then \
+		$(EXE) test_valido.c; \
 	else \
-		echo "Skipping test-valido: test_sintaxis_valido.c not found"; \
+		echo "Skipping test-valido: test_valido.c not found"; \
 	fi
 endif
 

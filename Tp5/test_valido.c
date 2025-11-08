@@ -52,10 +52,18 @@ switch (x){
   }
 }
 
+
 int sumarDOS(int l, int o){
-  int result;
-  l= 4;
-  o= 1;
-  result = l + o; 
+  int result= l + o; 
   return result;
 }
+
+sumarDOS(1, 2);
+
+
+int duplicarValor(int num1){
+  int resultado= num1 *2;
+  return resultado;
+}
+
+duplicarValor(2);

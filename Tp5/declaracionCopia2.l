@@ -113,9 +113,6 @@ LETRAS_Y_DIGITOS_AFTER [a-zA-Z0-9_]
 "!" { actualizarLocationsColumnas(); return '!'; }
 
 
-
-
-
 [" "\t] {
     // comentamos los espacios y tabulaciones para no ensuciar tanto la consola 
     //printf("Caracter: espacio o tabulacion\n");
@@ -126,11 +123,8 @@ LETRAS_Y_DIGITOS_AFTER [a-zA-Z0-9_]
 }
 [^ \t\n] {
     actualizarLocationsColumnas();
-    if (current_file) {
-        fprintf(stderr, "%s:%d:%d: Error lexico: Caracter no valido: '%s'\n", current_file, yylloc.first_line, yylloc.first_column, yytext);
-    } else {
-        fprintf(stderr, "Error lexico <linea:%d columna:%d> Caracter no valido: '%s'\n", yylloc.first_line, yylloc.first_column, yytext);
-    }
+    /* Sin prefijo de nombre de archivo */
+    fprintf(stderr, "Error lexico: Caracter no valido: '%s' (linea %d, columna %d)\n", yytext, yylloc.first_line, yylloc.first_column);
     erroresLexicos++;
     BEGIN(tokenNoReconocido);
 }
@@ -140,13 +134,10 @@ LETRAS_Y_DIGITOS_AFTER [a-zA-Z0-9_]
         fprintf(stderr, "a continuacion hay un espacio o tabulacion o salto de linea\n");
         BEGIN(INITIAL);
     }
-    [^ \t\n]+ {
+[^ \t\n]+ {
         actualizarLocationsColumnas();
-        if (current_file) {
-            fprintf(stderr, "%s:%d:%d: Error lexico: Secuencia no valida: %s (a continuacion del caracter no valido)\n", current_file, yylloc.first_line, yylloc.first_column, yytext);
-        } else {
-            fprintf(stderr, "Error lexico <linea:%d columna:%d> Secuencia no valida: %s (a continuacion del caracter no valido)\n", yylloc.first_line, yylloc.first_column, yytext);
-        }
+        /* Sin prefijo de nombre de archivo */
+        fprintf(stderr, "Error lexico: Secuencia no valida: %s (a continuacion del caracter no valido) (linea %d, columna %d)\n", yytext, yylloc.first_line, yylloc.first_column);
         BEGIN(INITIAL);
     }
 }

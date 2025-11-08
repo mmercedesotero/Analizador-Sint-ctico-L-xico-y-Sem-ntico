@@ -3,8 +3,15 @@
 #include <string.h>
 #include "tabla_simbolos.h"
 
+extern int erroresSintacticos;
+extern int erroresLexicos;
+extern int erroresSemanticos;
+extern FILE *yyin;
+extern int yylineno;
+
 #define MAX_SIMBOLOS 100
 #define MAX_FUNCIONES 50
+
 
 Variable listaVariables[MAX_SIMBOLOS];
 int cantidadSimbolos = 0;
@@ -25,16 +32,34 @@ void inicializarTablaSimbolos() {
     tablaSimbolos.listaFunciones = listaFunciones;
 }
 
+int verificarTiposOperacion(const char* op, const char* tipoIzq, const char* tipoDer, char** tipoResultado) {
+    // ejemplo simple: si ambos int -> int; int+float -> float si permites coerción
+    if (strcmp(tipoIzq, "int")==0 && strcmp(tipoDer, "int")==0) {
+        *tipoResultado = "int";
+        return ERR_OK;
+    }
+    if ((strcmp(tipoIzq,"int")==0 && strcmp(tipoDer,"float")==0)
+     || (strcmp(tipoIzq,"float")==0 && strcmp(tipoDer,"int")==0)
+     || (strcmp(tipoIzq,"float")==0 && strcmp(tipoDer,"float")==0)) {
+        *tipoResultado = "float";
+        return ERR_OK;
+    }
+    // añadir más reglas según tu lenguaje
+    return ERR_INVALIDO;
+}
+
 int insertarSimbolo(char* nombre, char* tipo, char* valor, int linea) {
     if (!nombre) {
-        fprintf(stderr, "Error: insertarSimbolo llamado con nombre nulo\n");
+        fprintf(stderr, "Error semantico: insertarSimbolo llamado con nombre nulo\n");
+        erroresSemanticos++;
         return ERR_INVALIDO;
     }
 
     /* Verificar que no exista un varaible con el mismo nombre */
     for (int i = 0; i < cantidadSimbolos; i++) {
         if (listaVariables[i].nombre && strcmp(listaVariables[i].nombre, nombre) == 0) {
-            fprintf(stderr, "Error: identificador '%s' ya declarado como variable en linea %d\n", nombre, listaVariables[i].linea);
+            fprintf(stderr, "Error semantico: identificador '%s' ya declarado como variable en linea %d\n", nombre, listaVariables[i].linea);
+            erroresSemanticos++;
             return ERR_DUPLICADO;
         }
     }
@@ -42,13 +67,15 @@ int insertarSimbolo(char* nombre, char* tipo, char* valor, int linea) {
     /* Verificar que no exista una funcion con el mismo nombre */
     for (int i = 0; i < cantidadFunciones; ++i) {
         if (listaFunciones[i].nombre && strcmp(listaFunciones[i].nombre, nombre) == 0) {
-            fprintf(stderr, "Error: identificador '%s' ya declarado como funcion\n", nombre);
+            fprintf(stderr, "Error semantico: identificador '%s' ya declarado como funcion\n", nombre);
+            erroresSemanticos++;
             return ERR_DUPLICADO;
         }
     }
 
     if (cantidadSimbolos >= MAX_SIMBOLOS) {
-        fprintf(stderr, "Error: limite de simbolos alcanzado (%d)\n", MAX_SIMBOLOS);
+        fprintf(stderr, "Error semantico: limite de simbolos alcanzado (%d)\n", MAX_SIMBOLOS);
+        erroresSemanticos++;
         return ERR_LLENA;
     }
 
@@ -69,6 +96,23 @@ int existeSimbolo(const char* nombre) {
     return 0;
 }
 
+int existeIdentificador(const char* nombre) {
+    if (!nombre) return ERR_INVALIDO;
+    /* Buscar en variables */
+    for (int i = 0; i < cantidadSimbolos; i++) {
+        if (listaVariables[i].nombre && strcmp(listaVariables[i].nombre, nombre) == 0) {
+            return ERR_OK;
+        }
+    }
+    /* Buscar en funciones */
+    for (int i = 0; i < cantidadFunciones; ++i) {
+        if (listaFunciones[i].nombre && strcmp(listaFunciones[i].nombre, nombre) == 0) {
+            return ERR_OK;
+        }
+    }
+    return ERR_INVALIDO;
+}
+
 void actualizarValor(const char* nombre, const char* nuevoValor, int linea) {
     for (int i = 0; i < cantidadSimbolos; i++) {
         if (strcmp(listaVariables[i].nombre, nombre) == 0) {
@@ -78,7 +122,8 @@ void actualizarValor(const char* nombre, const char* nuevoValor, int linea) {
             return;
         }
     }
-    printf("Error: variable '%s' usada sin declarar (linea %d)\n", nombre, linea);
+    printf("Error semantico: variable '%s' usada sin declarar (linea %d)\n", nombre, linea);
+    erroresSemanticos++;
 } // CONTROL TIPO DE DATO
 
 void mostrarTabla(const char* filename) {
@@ -123,7 +168,8 @@ static void liberarParametros(Parametro* params, int cantidad) {
 
 int insertarFuncion(char* nombre, char* tipo, char* valor, int cantidadParametros, Parametro* parametros) {
     if (!nombre) {
-        fprintf(stderr, "Error: insertarFuncion llamado con nombre nulo\n");
+        fprintf(stderr, "Error semantico: insertarFuncion llamado con nombre nulo\n");
+        erroresSemanticos++;
         return ERR_INVALIDO;
     }
 
@@ -132,7 +178,8 @@ int insertarFuncion(char* nombre, char* tipo, char* valor, int cantidadParametro
     /* Verificar que no exista un simbolo con el mismo nombre */
     for (int i = 0; i < cantidadSimbolos; ++i) {
         if (listaVariables[i].nombre && strcmp(listaVariables[i].nombre, nombre) == 0) {
-            fprintf(stderr, "Error: identificador '%s' ya declarado como variable (no se puede declarar funcion)\n", nombre);
+            fprintf(stderr, "Error semantico: identificador '%s' ya declarado como variable (no se puede declarar funcion)\n", nombre);
+            erroresSemanticos++;
             return ERR_DUPLICADO;
         }
     }
@@ -161,7 +208,7 @@ int insertarFuncion(char* nombre, char* tipo, char* valor, int cantidadParametro
     }
 
     if (cantidadFunciones >= MAX_FUNCIONES) {
-        fprintf(stderr, "Error: limite de funciones alcanzado (%d)\n", MAX_FUNCIONES);
+        fprintf(stderr, "Error tabla de simbolos: limite de funciones alcanzado (%d)\n", MAX_FUNCIONES);
         return ERR_LLENA;
     }
 
@@ -184,17 +231,49 @@ int insertarFuncion(char* nombre, char* tipo, char* valor, int cantidadParametro
 }
 
 // TODO: Agregarle la verificacion de tipo de datos del parametro
-int verificarLlamadaFuncion(const char* nombre, int cantidadArgs) {
+int verificarLlamadaFuncion(const char* nombre, Parametro* argumentos, int cantidadArgs) {
     if (!nombre) return 0;
     Funcion* f = buscarFuncionPorNombre(nombre);
     if (!f) {
-        fprintf(stderr, "Error: llamada a funcion desconocida '%s'\n", nombre);
+        fprintf(stderr, "Error semantico: llamada a funcion desconocida '%s'\n", nombre);
+        erroresSemanticos++;
         return 0;
     }
     if (f->cantidadParametros != cantidadArgs) {
-        fprintf(stderr, "Error: llamada a '%s' con %d argumentos, pero la funcion espera %d\n", nombre, cantidadArgs, f->cantidadParametros);
+        fprintf(stderr, "Error semantico: llamada a '%s' con %d argumentos, pero la funcion espera %d\n", nombre, cantidadArgs, f->cantidadParametros);
+        erroresSemanticos++;
         return 0;
     }
+
+    /* Verificar tipos en orden. Se espera que `argumentos[i].tipo` contenga
+       el tipo del i-ésimo argumento pasado en la llamada. Se usa strcmp para
+       comparar nombres de tipos exactos. */
+    for (int i = 0; i < cantidadArgs; ++i) {
+        const char* tipoEsperado = f->parametros && f->parametros[i].tipo ? f->parametros[i].tipo : NULL;
+        const char* tipoRecibido = argumentos && argumentos[i].tipo ? argumentos[i].tipo : NULL;
+
+        if (tipoEsperado == NULL && tipoRecibido == NULL) {
+            /* ambos desconocidos, aceptamos pero advertimos */
+            fprintf(stderr, "Error semantico: tipo del parametro %d para funcion '%s' no especificado\n", i+1, nombre);
+            erroresSemanticos++;
+            continue;
+        }
+
+        if (tipoEsperado == NULL || tipoRecibido == NULL) {
+            fprintf(stderr, "Error semantico: no coinciden los tipos de los argumentos en llamada a '%s' para parametro %d: esperado '%s', recibido '%s'\n",
+                    nombre, i+1, tipoEsperado ? tipoEsperado : "(sin especificar)", tipoRecibido ? tipoRecibido : "(sin especificar)");
+            erroresSemanticos++;
+            return 0;
+        }
+
+        if (strcmp(tipoEsperado, tipoRecibido) != 0) {
+            fprintf(stderr, "Error semantico: tipo incompatible para parametro %d en llamada a '%s': esperado '%s', recibido '%s'\n",
+                    i+1, nombre, tipoEsperado, tipoRecibido);
+            erroresSemanticos++;
+            return 0;
+        }
+    }
+
     return 1;
 }
 

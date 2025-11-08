@@ -17,6 +17,8 @@ int yywrap() { return 1; }
 extern FILE *yyin;
 int erroresSintacticos = 0;
 int erroresLexicos = 0;
+int erroresSemanticos = 0; /* definicion global usada tambien por tabla_simbolos.c */
+
 
 /* Nombre del archivo actual para prefijar mensajes */
 const char* current_file = NULL;
@@ -34,6 +36,10 @@ extern int yylineno;
     int num;
     float real;
     ListaVariables* lvars;
+    struct {
+        char* tipo;
+        char* valor;
+    } expr;
 };
 %token <str> TIPO_DATO IDENTIFICADOR LITERAL_CADENA CONST_OCTAL CONST_HEXADECIMAL CONST_CARACTER
 %token <num> CONST_ENTERA
@@ -47,9 +53,11 @@ extern int yylineno;
 
 %start programa
 
-%type <str> declaracion unaVarSimple inicializacion_op inicializacion expresion expresionop
-%type <str> expAsignacion expCondicional expOr expAnd expIgualdad expRelacional expAditiva expMultiplicativa expPostfijo expPrimaria
-%type <str> expUnaria operUnario constante literalCadena nombreTipo
+%type <str> declaracion unaVarSimple inicializacion_op inicializacion expresionop
+%type <lvars> listaParametrosop listaParametros
+%type <expr> expresion expAsignacion expCondicional expOr expAnd expIgualdad expRelacional expAditiva expMultiplicativa expPostfijo expPrimaria
+%type <expr> expUnaria constante literalCadena
+%type <str> operUnario nombreTipo
 %type <lvars> listaVarSimples
 
 %left '+' '-'
@@ -62,7 +70,7 @@ extern int yylineno;
 
 %%
 
-
+                 /* Registrar la funcion en la tabla de simbolos: nombre, tipo retorno, sin valor, parametros */
 // Programa
 programa: listaTopLevel {
                 printf("=========================================\n");
@@ -95,11 +103,42 @@ declaracion: declaVarSimples {
             }
             | declaracionFuncion { 
                 printf("Se reconocio una declaracion de funcion.\n"); 
+
             }
             | error ';' { yyerrok; }
             ;
             
 declaracionFuncion: TIPO_DATO IDENTIFICADOR '(' listaParametrosop ')' sentencia {
+                 /* Registrar la funcion en la tabla de simbolos: nombre, tipo retorno, sin valor, parametros */
+                 ListaVariables* params = $4; /* puede ser NULL si no hay parametros */
+                 Parametro* parray = NULL;
+                 int pcnt = 0;
+                 if (params) {
+                     pcnt = params->cantidad;
+                     parray = malloc(sizeof(Parametro) * pcnt);
+                     for (int i = 0; i < pcnt; ++i) {
+                         parray[i].nombre = params->variables[i].nombre ? strdup(params->variables[i].nombre) : NULL;
+                         parray[i].tipo = params->variables[i].tipo ? strdup(params->variables[i].tipo) : NULL;
+                     }
+                 }
+                 insertarFuncion($2, $1, "-", pcnt, parray);
+                 /* liberar la estructura temporal de parametros (insertarFuncion hizo sus propias copias) */
+                 if (parray) {
+                     for (int i = 0; i < pcnt; ++i) {
+                         if (parray[i].nombre) free(parray[i].nombre);
+                         if (parray[i].tipo) free(parray[i].tipo);
+                     }
+                     free(parray);
+                 }
+                 if (params) {
+                     for (int i = 0; i < params->cantidad; ++i) {
+                         if (params->variables[i].nombre) free(params->variables[i].nombre);
+                         if (params->variables[i].valor) free(params->variables[i].valor);
+                         if (params->variables[i].tipo) free(params->variables[i].tipo);
+                     }
+                     free(params->variables);
+                     free(params);
+                 }
                  printf("Se reconocio la declaracion de la funcion: %s.\n", $2);
 };
 
@@ -108,11 +147,27 @@ listaParametrosop:
             | listaParametros
             ;
 listaParametros: TIPO_DATO IDENTIFICADOR {
-                /* Registrar parametros como variables declaradas */
-                insertarSimbolo($2, $1, "-", @2.first_line);
+                ListaVariables* lista = malloc(sizeof(ListaVariables));
+                lista->variables = malloc(sizeof(Variable));
+                lista->variables[0].nombre = strdup($2);
+                lista->variables[0].tipo = strdup($1);
+                lista->variables[0].valor = NULL;
+                lista->variables[0].linea = @2.first_line;
+                lista->cantidad = 1;
+                $$ = lista;
+                free($1);
+                free($2);
             }
             | listaParametros ',' TIPO_DATO IDENTIFICADOR {
-                insertarSimbolo($4, $3, "-", @4.first_line);
+                $1->variables = realloc($1->variables, sizeof(Variable) * ($1->cantidad + 1));
+                $1->variables[$1->cantidad].nombre = strdup($4);
+                $1->variables[$1->cantidad].tipo = strdup($3);
+                $1->variables[$1->cantidad].valor = NULL;
+                $1->variables[$1->cantidad].linea = @4.first_line;
+                $1->cantidad++;
+                $$ = $1;
+                free($3);
+                free($4);
             }
             ;
             
@@ -120,8 +175,13 @@ listaParametros: TIPO_DATO IDENTIFICADOR {
 declaVarSimples: // PARA INSERTAR CADA VARIABLE EN LA TS
       TIPO_DATO listaVarSimples ';' {
           for (int i = 0; i < $2->cantidad; i++) {
-              char* val = $2->variables[i].valor ? $2->variables[i].valor : "-";
-              insertarSimbolo($2->variables[i].nombre, $1, val, $2->variables[i].linea);
+              char* val = $2->variables[i].valor;
+              if (val && strcmp(val, "__ERROR__") == 0) {
+                  fprintf(stderr, "No se inserta '%s' por error semantico en la inicializacion (linea %d)\n", $2->variables[i].nombre, $2->variables[i].linea);
+                  // ya se conto el error al evaluar la expresion
+              } else {
+                  insertarSimbolo($2->variables[i].nombre, $1, val ? val : "-", $2->variables[i].linea);
+              }
               if ($2->variables[i].nombre) free($2->variables[i].nombre);
               if ($2->variables[i].valor) free($2->variables[i].valor);
           }
@@ -137,7 +197,9 @@ listaVarSimples:
           ListaVariables* lista = malloc(sizeof(ListaVariables));
           lista->variables = malloc(sizeof(Variable));
           lista->variables[0].nombre = strdup($1);
-          if ($2 && strlen($2) > 0) {
+          if ($2 && strcmp($2, "__ERROR__") == 0) {
+              lista->variables[0].valor = strdup("__ERROR__");
+          } else if ($2 && strlen($2) > 0) {
               lista->variables[0].valor = strdup($2 + 3);
           } else {
               lista->variables[0].valor = NULL;
@@ -150,7 +212,9 @@ listaVarSimples:
     | listaVarSimples ',' IDENTIFICADOR inicializacion_op {
           $1->variables = realloc($1->variables, sizeof(Variable) * ($1->cantidad + 1));
           $1->variables[$1->cantidad].nombre = strdup($3);
-          if ($4 && strlen($4) > 0) {
+          if ($4 && strcmp($4, "__ERROR__") == 0) {
+              $1->variables[$1->cantidad].valor = strdup("__ERROR__");
+          } else if ($4 && strlen($4) > 0) {
               $1->variables[$1->cantidad].valor = strdup($4 + 3);
           } else {
               $1->variables[$1->cantidad].valor = NULL;
@@ -182,10 +246,14 @@ inicializacion_op:
             ;
 
 inicializacion: ASIGNACION expresion {
-            char* temp = malloc(strlen($2) + 4); 
-            sprintf(temp, " = %s", $2);
-            $$ = temp;
-            free($2);
+            if ($2.tipo && strcmp($2.tipo, "indef") == 0) {
+                $$ = strdup("__ERROR__");
+            } else {
+                size_t len = $2.valor ? strlen($2.valor) : 0;
+                char* temp = malloc(len + 4);
+                sprintf(temp, " = %s", $2.valor ? $2.valor : "");
+                $$ = temp;
+            }
             }
             ;
 
@@ -242,9 +310,14 @@ forInit:
 declaracionFor:
             TIPO_DATO listaVarSimples {
                 for (int i = 0; i < $2->cantidad; i++) {
-                    insertarSimbolo($2->variables[i].nombre, $1,
-                                    $2->variables[i].valor ? $2->variables[i].valor : "-",
-                                    $2->variables[i].linea);
+                    char* val = $2->variables[i].valor;
+                    if (val && strcmp(val, "__ERROR__") == 0) {
+                        fprintf(stderr, "No se inserta '%s' por error semantico en la inicializacion (linea %d)\n", $2->variables[i].nombre, $2->variables[i].linea);
+                    } else {
+                        insertarSimbolo($2->variables[i].nombre, $1,
+                                        $2->variables[i].valor ? $2->variables[i].valor : "-",
+                                        $2->variables[i].linea);
+                    }
                     if ($2->variables[i].nombre) free($2->variables[i].nombre);
                     if ($2->variables[i].valor) free($2->variables[i].valor);
                 }
@@ -287,7 +360,7 @@ expresionop:
                 $$ = strdup("");
             }
             | constante {
-                $$ = strdup($1);
+                $$ = strdup($1.valor);
             }
             | IDENTIFICADOR {
                 // Buscar el valor en la tabla de símbolos
@@ -307,12 +380,10 @@ expresionop:
                 }
                 $$ = strdup($3); 
             }
-            | constante {
-                $$ = strdup($1);
-            }
             | IDENTIFICADOR {
-                if (!existeSimbolo($1)) {
-                    printf("Error: variable '%s' usada sin declarar (linea %d)\n", $1, @1.first_line);
+                if (existeIdentificador($1) != ERR_OK) {
+                    printf("Error semantico: variable '%s' usada sin declarar (linea %d)\n", $1, @1.first_line);
+                    erroresSemanticos++;
                 }
                 $$ = strdup($1);
             }
@@ -441,41 +512,61 @@ expresionop:
             ;
 
             
-expresion: expAsignacion
+expresion: expAsignacion { $$.tipo = $1.tipo; $$.valor = $1.valor; }
             ;
 
-expAsignacion: expCondicional
+expAsignacion: expCondicional { $$.tipo = $1.tipo; $$.valor = $1.valor; }
             | IDENTIFICADOR ASIGNACION expresion {
                 // Asignación simple: x = expr
-                actualizarValor($1, $3, @1.first_line);
-                $$ = strdup($3);
-                free($3);
-            }
-            | IDENTIFICADOR operAsignacion expresion {
-                // Evaluar asignación compuesta (ej: x += 5)
-                // Obtener valor actual de la variable
-                char* valorActual = NULL;
+                char* tipoVar = NULL;
                 for (int i = 0; i < cantidadSimbolos; i++) {
                     if (strcmp(listaVariables[i].nombre, $1) == 0) {
-                        valorActual = listaVariables[i].valor;
+                        tipoVar = listaVariables[i].tipo;
                         break;
                     }
                 }
-                if (valorActual) {
-                    double valActual = atof(valorActual);
-                    double valNuevo = atof($3);
+                if (!tipoVar) {
+                    printf("Error semantico: variable '%s' usada sin declarar (linea %d)\n", $1, @1.first_line);
+                    erroresSemanticos++;
+                } else if (strcmp(tipoVar, $3.tipo) != 0) {
+                    fprintf(stderr, "Error semantico: tipos incompatibles en asignacion: %s = %s (linea %d)\n", tipoVar, $3.tipo ? $3.tipo : "(indef)", @1.first_line);
+                    erroresSemanticos++;
+                }
+                actualizarValor($1, $3.valor, @1.first_line);
+                $$.tipo = tipoVar ? strdup(tipoVar) : strdup("indef");
+                $$.valor = strdup($3.valor);
+            }
+            | IDENTIFICADOR operAsignacion expresion {
+                // Evaluar asignación compuesta (ej: x += expr)
+                char* valorActual = NULL;
+                char* tipoVar = NULL;
+                for (int i = 0; i < cantidadSimbolos; i++) {
+                    if (strcmp(listaVariables[i].nombre, $1) == 0) {
+                        valorActual = listaVariables[i].valor;
+                        tipoVar = listaVariables[i].tipo;
+                        break;
+                    }
+                }
+                char* tipoRes = NULL;
+                if (!tipoVar || verificarTiposOperacion("+=", tipoVar, $3.tipo, &tipoRes) != ERR_OK) {
+                    fprintf(stderr, "Error semantico: tipos incompatibles en asignacion compuesta: %s y %s (linea %d)\n", tipoVar ? tipoVar : "(indef)", $3.tipo ? $3.tipo : "(indef)", @1.first_line);
+                    erroresSemanticos++;
+                    $$.tipo = strdup("indef");
+                    $$.valor = strdup("0");
+                } else {
+                    double valActual = valorActual ? atof(valorActual) : 0;
+                    double valNuevo = atof($3.valor);
                     double resultado = valActual + valNuevo; // Solo += por ahora
                     char buffer[64];
                     sprintf(buffer, "%g", resultado);
                     actualizarValor($1, buffer, @1.first_line);
-                    $$ = strdup(buffer);
-                } else {
-                    $$ = strdup($3);
+                    $$.tipo = strdup(tipoRes);
+                    $$.valor = strdup(buffer);
                 }
-                free($3);
             }
             | expUnaria operAsignacion expAsignacion {
-                $$ = strdup("asignacion compuesta");
+                $$.tipo = strdup("indef");
+                $$.valor = strdup("0");
             }
             ;
 
@@ -505,78 +596,105 @@ expRelacional: expAditiva
             | expRelacional '<' expAditiva 
             ;
 expAditiva:  expMultiplicativa {
-                $$ = strdup($1);
+                $$.tipo = $1.tipo; $$.valor = $1.valor;
             }
             | expAditiva '+' expMultiplicativa {
-                double val1 = atof($1);
-                double val2 = atof($3);
-                double resultado = val1 + val2;
-                char buffer[64];
-                sprintf(buffer, "%g", resultado);
-                $$ = strdup(buffer);
-                free($1);
-                free($3);
+                char* tipoRes = NULL;
+                if (verificarTiposOperacion("+", $1.tipo, $3.tipo, &tipoRes) != ERR_OK) {
+                    fprintf(stderr, "Error semantico: tipos incompatibles para +: %s y %s (linea %d)\n", $1.tipo ? $1.tipo : "(indef)", $3.tipo ? $3.tipo : "(indef)", yylineno);
+                    erroresSemanticos++;
+                    $$.tipo = strdup("indef");
+                    $$.valor = strdup("0");
+                } else {
+                    double val1 = atof($1.valor);
+                    double val2 = atof($3.valor);
+                    double resultado = val1 + val2;
+                    char buffer[64];
+                    sprintf(buffer, "%g", resultado);
+                    $$.valor = strdup(buffer);
+                    $$.tipo = strdup(tipoRes);
+                }
             }
             | expAditiva '-' expMultiplicativa {
-                double val1 = atof($1);
-                double val2 = atof($3);
-                double resultado = val1 - val2;
-                char buffer[64];
-                sprintf(buffer, "%g", resultado);
-                $$ = strdup(buffer);
-                free($1);
-                free($3);
+                char* tipoRes = NULL;
+                if (verificarTiposOperacion("-", $1.tipo, $3.tipo, &tipoRes) != ERR_OK) {
+                    fprintf(stderr, "Error semantico: tipos incompatibles para -: %s y %s (linea %d)\n", $1.tipo ? $1.tipo : "(indef)", $3.tipo ? $3.tipo : "(indef)", yylineno);
+                    erroresSemanticos++;
+                    $$.tipo = strdup("indef");
+                    $$.valor = strdup("0");
+                } else {
+                    double val1 = atof($1.valor);
+                    double val2 = atof($3.valor);
+                    double resultado = val1 - val2;
+                    char buffer[64];
+                    sprintf(buffer, "%g", resultado);
+                    $$.valor = strdup(buffer);
+                    $$.tipo = strdup(tipoRes);
+                }
             }
             ;
             
 expMultiplicativa:  expUnaria {
-                $$ = strdup($1);
+                $$.tipo = $1.tipo; $$.valor = $1.valor;
             }
             | expMultiplicativa '*' expUnaria {
-                double val1 = atof($1);
-                double val2 = atof($3);
-                double resultado = val1 * val2;
-                char buffer[64];
-                sprintf(buffer, "%g", resultado);
-                $$ = strdup(buffer);
-                free($1);
-                free($3);
-            }
-            | expMultiplicativa '/' expUnaria {
-                double val1 = atof($1);
-                double val2 = atof($3);
-                if (val2 != 0) {
-                    double resultado = val1 / val2;
+                char* tipoRes = NULL;
+                if (verificarTiposOperacion("*", $1.tipo, $3.tipo, &tipoRes) != ERR_OK) {
+                    fprintf(stderr, "Error semantico: tipos incompatibles para *: %s y %s (linea %d)\n", $1.tipo ? $1.tipo : "(indef)", $3.tipo ? $3.tipo : "(indef)", yylineno);
+                    erroresSemanticos++;
+                    $$.tipo = strdup("indef");
+                    $$.valor = strdup("0");
+                } else {
+                    double val1 = atof($1.valor);
+                    double val2 = atof($3.valor);
+                    double resultado = val1 * val2;
                     char buffer[64];
                     sprintf(buffer, "%g", resultado);
-                    $$ = strdup(buffer);
-                } else {
-                    printf("Error: division por cero\n");
-                    $$ = strdup("0");
+                    $$.valor = strdup(buffer);
+                    $$.tipo = strdup(tipoRes);
                 }
-                free($1);
-                free($3);
+            }
+            | expMultiplicativa '/' expUnaria {
+                char* tipoRes = NULL;
+                if (verificarTiposOperacion("/", $1.tipo, $3.tipo, &tipoRes) != ERR_OK) {
+                    fprintf(stderr, "Error semantico: tipos incompatibles para /: %s y %s (linea %d)\n", $1.tipo ? $1.tipo : "(indef)", $3.tipo ? $3.tipo : "(indef)", yylineno);
+                    erroresSemanticos++;
+                    $$.tipo = strdup("indef");
+                    $$.valor = strdup("0");
+                } else {
+                    double val1 = atof($1.valor);
+                    double val2 = atof($3.valor);
+                    if (val2 != 0) {
+                        double resultado = val1 / val2;
+                        char buffer[64];
+                        sprintf(buffer, "%g", resultado);
+                        $$.valor = strdup(buffer);
+                    } else {
+                        printf("Error: division por cero\n");
+                        $$.valor = strdup("0");
+                    }
+                    $$.tipo = strdup(tipoRes);
+                }
             }
             ;
 
 expUnaria:
             expPostfijo {
-                $$ = strdup($1);
+                $$.tipo = $1.tipo; $$.valor = $1.valor;
             }
             | INCREMENTO expUnaria {
-                // Pre-incremento: incrementa primero, luego retorna
-                // Asumimos que expUnaria es un IDENTIFICADOR
-                $$ = strdup($2);
+                /* Pre-incremento: aqui solo propagamos el tipo y valor calculado */
+                $$.tipo = $2.tipo; $$.valor = $2.valor;
             }
             | DECREMENTO expUnaria {
-                // Pre-decremento: decrementa primero, luego retorna
-                $$ = strdup($2);
+                $$.tipo = $2.tipo; $$.valor = $2.valor;
             }
             | operUnario expUnaria {
-                $$ = strdup($2);
+                $$.tipo = $2.tipo; $$.valor = $2.valor;
             }
             | SIZEOF '(' nombreTipo ')' {
-                $$ = strdup("sizeof");
+                $$.tipo = strdup("int");
+                $$.valor = strdup("0");
             }
             ;
 
@@ -596,45 +714,61 @@ operUnario:
             ;
 
 
-expPostfijo: expPrimaria  
-            | expPostfijo '[' expresion ']'  
-            | expPostfijo '(' listaArgumentosop ')'
+expPostfijo: expPrimaria  {
+                $$.tipo = $1.tipo; $$.valor = $1.valor;
+            }
+            | expPostfijo '[' expresion ']'  {
+                /* no implementado: propagar tipo/valor */
+                $$.tipo = $1.tipo; $$.valor = $1.valor;
+            }
+            | expPostfijo '(' listaArgumentosop ')' {
+                /* llamada a funcion: sin semantica, propagar */
+                $$.tipo = $1.tipo; $$.valor = $1.valor;
+            }
             | IDENTIFICADOR INCREMENTO {
                 // Post-incremento: retorna valor actual, luego incrementa
                 char* valorActual = NULL;
+                char* tipoVar = NULL;
                 for (int i = 0; i < cantidadSimbolos; i++) {
                     if (strcmp(listaVariables[i].nombre, $1) == 0) {
                         valorActual = listaVariables[i].valor;
+                        tipoVar = listaVariables[i].tipo;
                         break;
                     }
                 }
                 if (valorActual) {
                     double val = atof(valorActual);
-                    $$ = strdup(valorActual); // Retorna valor actual
+                    $$.valor = strdup(valorActual); // Retorna valor actual
                     char buffer[64];
                     sprintf(buffer, "%g", val + 1);
                     actualizarValor($1, buffer, @1.first_line);
+                    $$.tipo = tipoVar ? strdup(tipoVar) : strdup("indef");
                 } else {
-                    $$ = strdup("0");
+                    $$.valor = strdup("0");
+                    $$.tipo = strdup("indef");
                 }
             }
             | IDENTIFICADOR DECREMENTO {
                 // Post-decremento: retorna valor actual, luego decrementa
                 char* valorActual = NULL;
+                char* tipoVar = NULL;
                 for (int i = 0; i < cantidadSimbolos; i++) {
                     if (strcmp(listaVariables[i].nombre, $1) == 0) {
                         valorActual = listaVariables[i].valor;
+                        tipoVar = listaVariables[i].tipo;
                         break;
                     }
                 }
                 if (valorActual) {
                     double val = atof(valorActual);
-                    $$ = strdup(valorActual); // Retorna valor actual
+                    $$.valor = strdup(valorActual); // Retorna valor actual
                     char buffer[64];
                     sprintf(buffer, "%g", val - 1);
                     actualizarValor($1, buffer, @1.first_line);
+                    $$.tipo = tipoVar ? strdup(tipoVar) : strdup("indef");
                 } else {
-                    $$ = strdup("0");
+                    $$.valor = strdup("0");
+                    $$.tipo = strdup("indef");
                 }
             }
             ;
@@ -650,33 +784,34 @@ listaArgumentos: expAsignacion
  
 expPrimaria:
 IDENTIFICADOR {
-                // Buscar el valor del identificador en la tabla de símbolos
-                if (!existeSimbolo($1)) {
-                    printf("Error: variable '%s' usada sin declarar (linea %d)\n", $1, @1.first_line);
-                    $$ = strdup("0");
+                // Buscar el valor y tipo del identificador en la tabla de símbolos
+                if (existeIdentificador($1) != ERR_OK) {
+                    printf("Error semantico: variable '%s' usada sin declarar (linea %d)\n", $1, @1.first_line);
+                    erroresSemanticos++;
+                    $$.valor = strdup("0");
+                    $$.tipo = strdup("indef");
                 } else {
-                    // Buscar el valor en la tabla
                     char* valor = NULL;
+                    char* tipo = NULL;
                     for (int i = 0; i < cantidadSimbolos; i++) {
                         if (strcmp(listaVariables[i].nombre, $1) == 0) {
                             valor = listaVariables[i].valor;
+                            tipo = listaVariables[i].tipo;
                             break;
                         }
                     }
-                    $$ = strdup(valor ? valor : "0");
+                    $$.valor = strdup(valor ? valor : "0");
+                    $$.tipo = strdup(tipo ? tipo : "indef");
                 }
             }
             | constante {
-                $$ = strdup($1);
+                $$.valor = $1.valor; $$.tipo = $1.tipo;
             }
             | literalCadena {
-                $$ = strdup($1);
+                $$.valor = $1.valor; $$.tipo = $1.tipo;
             }
             | '(' expresion ')' {
-                int len = strlen($2) + 3;
-                $$ = malloc(len);
-                sprintf($$, "(%s)", $2);
-                free($2);
+                $$.valor = $2.valor; $$.tipo = $2.tipo;
             }
             ;
 
@@ -685,27 +820,33 @@ constante:
             CONST_ENTERA {
                 char buf[32];
                 sprintf(buf, "%d", $1);
-                $$ = strdup(buf);
+                $$.valor = strdup(buf);
+                $$.tipo = strdup("int");
             }
             | CONST_OCTAL {
-                $$ = strdup($1);
+                $$.valor = strdup($1);
+                $$.tipo = strdup("int");
             }
             | CONST_HEXADECIMAL {
-                $$ = strdup($1);
+                $$.valor = strdup($1);
+                $$.tipo = strdup("int");
             }
             | CONST_REAL {
                 char buf[64];
                 sprintf(buf, "%g", $1);
-                $$ = strdup(buf);
+                $$.valor = strdup(buf);
+                $$.tipo = strdup("float");
             }
             | CONST_CARACTER {
-                $$ = strdup($1);
+                $$.valor = strdup($1);
+                $$.tipo = strdup("char");
             }
             ;
 
 literalCadena:
             LITERAL_CADENA {
-                $$ = strdup($1);
+                $$.valor = strdup($1);
+                $$.tipo = strdup("string");
             }
             ;
 
@@ -717,23 +858,18 @@ nombreTipo:  TIPO_DATO
 
 int yyerror(const char *s) {
     erroresSintacticos++;
-    if (current_file) {
-        fprintf(stderr, "%s:%d:%d: Error sintactico: %s\n",
-                current_file, yylloc.first_line, yylloc.first_column, s);
-    } else {
-        fprintf(stderr, "Error sintactico <linea:%d columna:[%d:%d]> %s\n",
-                yylloc.first_line, yylloc.first_column, yylloc.last_column - 1, s);
-    }
+    /* Sin prefijo de nombre de archivo */
+    fprintf(stderr, "Error sintactico: %s (linea %d, columna %d)\n",
+            s, yylloc.first_line, yylloc.first_column);
     return 0;
 }
 
-int main(int argc, char *argv[]) {
 
-    
 #if YYDEBUG
     yydebug = 1;
 #endif
 
+int main(int argc, char *argv[]) {
     if (argc != 2) {
         fprintf(stderr, "Uso: %s <archivo>\n", argv[0]);
         return 1;
@@ -754,13 +890,13 @@ int main(int argc, char *argv[]) {
     int totalErrores = erroresSintacticos + erroresLexicos;
     if (resultado == 0 && totalErrores == 0)
         fprintf(stdout, "El archivo %s es valido, no se encontraron errores\n", argv[1]);
-    fprintf(stdout, "\nAnalisis terminado. Errores totales: %d (sintacticos: %d, lexicos: %d)\n", totalErrores, erroresSintacticos, erroresLexicos);
+    fprintf(stdout, "\nAnalisis terminado. Errores totales: %d (sintacticos: %d, lexicos: %d, semanticos: %d)\n", totalErrores, erroresSintacticos, erroresLexicos, erroresSemanticos);
 
     mostrarTabla(current_file ? current_file : argv[1]);
+    /* Imprimir la tabla de funciones registrada en la tabla de símbolos */
+    mostrarFunciones();
 
     fprintf(stdout, "\n==================================================\n");
     fflush(stdout);
     return 0;
-
-
 }
