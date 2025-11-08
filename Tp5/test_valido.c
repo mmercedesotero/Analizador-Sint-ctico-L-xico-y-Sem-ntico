@@ -58,7 +58,6 @@ int sumarDOS(int l, int o){
   return result;
 }
 
-<<<<<<< HEAD:Tp5/test_valido.c
 sumarDOS(1, 2);
 
 
@@ -68,16 +67,3 @@ int duplicarValor(int num1){
 }
 
 duplicarValor(2);
-=======
-
-int sumar(int argumento1, int argumento2){
-  int resultado = argumento1 + argumento2;
-  return resultado;
-}
-
-void funcionVoid(){
-  return;
-}
-
-sumar(3+2);
->>>>>>> 6caf74b5989bc2ecf3a154db5f6dc321f198789f:Tp5/test_sintaxis_valido.c

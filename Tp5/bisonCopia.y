@@ -786,7 +786,8 @@ IDENTIFICADOR {
                 // Buscar el valor del identificador en la tabla de símbolos
                 if (!existeSimbolo($1)) {
                     printf("Error: variable '%s' usada sin declarar (linea %d)\n", $1, @1.first_line);
-                    $$ = strdup("0");
+                    $$.valor = strdup("0");
+                    $$.tipo = strdup("indef");
                 } else {
                     char* valor = NULL;
                     char* tipo = NULL;
