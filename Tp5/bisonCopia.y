@@ -108,39 +108,70 @@ declaracion: declaVarSimples {
             | error ';' { yyerrok; }
             ;
             
-declaracionFuncion: TIPO_DATO IDENTIFICADOR '(' listaParametrosop ')' sentencia {
-                 /* Registrar la funcion en la tabla de simbolos: nombre, tipo retorno, sin valor, parametros */
-                 ListaVariables* params = $4; /* puede ser NULL si no hay parametros */
-                 Parametro* parray = NULL;
-                 int pcnt = 0;
-                 if (params) {
-                     pcnt = params->cantidad;
-                     parray = malloc(sizeof(Parametro) * pcnt);
-                     for (int i = 0; i < pcnt; ++i) {
-                         parray[i].nombre = params->variables[i].nombre ? strdup(params->variables[i].nombre) : NULL;
-                         parray[i].tipo = params->variables[i].tipo ? strdup(params->variables[i].tipo) : NULL;
-                     }
-                 }
-                 insertarFuncion($2, $1, "-", pcnt, parray);
-                 /* liberar la estructura temporal de parametros (insertarFuncion hizo sus propias copias) */
-                 if (parray) {
-                     for (int i = 0; i < pcnt; ++i) {
-                         if (parray[i].nombre) free(parray[i].nombre);
-                         if (parray[i].tipo) free(parray[i].tipo);
-                     }
-                     free(parray);
-                 }
-                 if (params) {
-                     for (int i = 0; i < params->cantidad; ++i) {
-                         if (params->variables[i].nombre) free(params->variables[i].nombre);
-                         if (params->variables[i].valor) free(params->variables[i].valor);
-                         if (params->variables[i].tipo) free(params->variables[i].tipo);
-                     }
-                     free(params->variables);
-                     free(params);
-                 }
-                 printf("Se reconocio la declaracion de la funcion: %s.\n", $2);
-};
+declaracionFuncion:
+    TIPO_DATO IDENTIFICADOR '(' listaParametrosop ')' 
+    {   /* --- Acción mid-rule: registrar función e insertar parámetros --- */
+        ListaVariables* params = $4; /* lista de parámetros (puede ser NULL) */
+        Parametro* tempParams = NULL;
+        int paramCount = 0;
+
+        /* construir un array temporal de Parametro para pasar a insertarFuncion.
+           insertarFuncion hace sus propias copias de los strings. */
+        if (params) {
+            paramCount = params->cantidad;
+            tempParams = malloc(sizeof(Parametro) * paramCount);
+            for (int i = 0; i < paramCount; ++i) {
+                tempParams[i].nombre = params->variables[i].nombre ? strdup(params->variables[i].nombre) : NULL;
+                tempParams[i].tipo   = params->variables[i].tipo   ? strdup(params->variables[i].tipo)   : NULL;
+            }
+        }
+
+        // Registrar la funcion en la tabla de simbolos.
+        insertarFuncion($2, $1, "-", paramCount, tempParams);
+
+        /* Insertar cada parametro como variable en la tabla de simbolos
+           para que estén disponibles dentro del cuerpo de la funcion. */
+        if (params) {
+            for (int i = 0; i < params->cantidad; ++i) {
+                char* pname = params->variables[i].nombre;
+                char* ptype = params->variables[i].tipo;
+                int pline   = params->variables[i].linea;
+                insertarSimbolo(pname, ptype ? ptype : "-", "-", pline);
+            }
+        }
+
+        /* Liberar el array temporal usado para insertarFuncion (las copias ya se hicieron). */
+        if (tempParams) {
+            for (int i = 0; i < paramCount; ++i) {
+                if (tempParams[i].nombre) free(tempParams[i].nombre);
+                if (tempParams[i].tipo)   free(tempParams[i].tipo);
+            }
+            free(tempParams);
+        }
+
+        /* Liberar la estructura auxiliar params: ya copiamos lo necesario a la TS */
+        if (params) {
+            for (int i = 0; i < params->cantidad; ++i) {
+                if (params->variables[i].nombre) free(params->variables[i].nombre);
+                if (params->variables[i].valor)  free(params->variables[i].valor);
+                if (params->variables[i].tipo)   free(params->variables[i].tipo);
+            }
+            free(params->variables);
+            free(params);
+        }
+
+        free($1);
+    }
+    sentencia
+    {   /* --- Accion final: mensaje informativo y liberar IDENTIFICADOR --- */
+        if (current_file)
+            printf("Se reconocio la declaracion de la funcion: %s (archivo: %s, linea: %d).\n", $2, current_file, @2.first_line);
+        else
+            printf("Se reconocio la declaracion de la funcion: %s (linea: %d).\n", $2, @2.first_line);
+
+        free($2);
+    }
+;
 
 listaParametrosop:
             /* vacío */
@@ -382,7 +413,8 @@ expresionop:
             }
             | IDENTIFICADOR {
                 if (!existeSimbolo($1)) {
-                    printf("Error: variable '%s' usada sin declarar (linea %d)\n", $1, @1.first_line);
+                    printf("Error semantico: variable '%s' usada sin declarar (linea %d)\n", $1, @1.first_line);
+                    erroresSemanticos++;
                 }
                 $$ = strdup($1);
             }
@@ -716,12 +748,17 @@ operUnario:
 expPostfijo: expPrimaria  {
                 $$.tipo = $1.tipo; $$.valor = $1.valor;
             }
+            /* llamada directa a función por nombre: IDENTIFICADOR(...) */
+            | IDENTIFICADOR '(' listaArgumentosop ')' {
+                $$.valor = strdup("0");
+                free($1);
+            }
             | expPostfijo '[' expresion ']'  {
                 /* no implementado: propagar tipo/valor */
                 $$.tipo = $1.tipo; $$.valor = $1.valor;
             }
             | expPostfijo '(' listaArgumentosop ')' {
-                /* llamada a funcion: sin semantica, propagar */
+                /* llamada a funcion sobre expresion (e.g. obj.f(...) o (f)(...) ) */
                 $$.tipo = $1.tipo; $$.valor = $1.valor;
             }
             | IDENTIFICADOR INCREMENTO {
@@ -785,7 +822,8 @@ expPrimaria:
 IDENTIFICADOR {
                 // Buscar el valor del identificador en la tabla de símbolos
                 if (!existeSimbolo($1)) {
-                    printf("Error: variable '%s' usada sin declarar (linea %d)\n", $1, @1.first_line);
+                    printf("Error semantico: variable '%s' usada sin declarar (linea %d)\n", $1, @1.first_line);
+                    erroresSemanticos++;
                     $$.valor = strdup("0");
                     $$.tipo = strdup("indef");
                 } else {
