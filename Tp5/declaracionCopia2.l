@@ -7,6 +7,8 @@
     #include "bisonCopia.tab.h"
     #include <string.h>
 
+extern const char* current_file;
+
 void actualizarLocationsNuevaFila() {
     yylloc.first_column = yylloc.last_column = 0;
     yylloc.first_line += 1;
@@ -124,7 +126,11 @@ LETRAS_Y_DIGITOS_AFTER [a-zA-Z0-9_]
 }
 [^ \t\n] {
     actualizarLocationsColumnas();
-    fprintf(stderr, "Error lexico <linea:%d columna:%d> Caracter no valido: '%s'\n", yylloc.first_line, yylloc.first_column, yytext);
+    if (current_file) {
+        fprintf(stderr, "%s:%d:%d: Error lexico: Caracter no valido: '%s'\n", current_file, yylloc.first_line, yylloc.first_column, yytext);
+    } else {
+        fprintf(stderr, "Error lexico <linea:%d columna:%d> Caracter no valido: '%s'\n", yylloc.first_line, yylloc.first_column, yytext);
+    }
     erroresLexicos++;
     BEGIN(tokenNoReconocido);
 }
@@ -136,7 +142,11 @@ LETRAS_Y_DIGITOS_AFTER [a-zA-Z0-9_]
     }
     [^ \t\n]+ {
         actualizarLocationsColumnas();
-        fprintf(stderr, "Error lexico <linea:%d columna:%d> Secuencia no valida: %s (a continuacion del caracter no valido)\n", yylloc.first_line, yylloc.first_column, yytext);
+        if (current_file) {
+            fprintf(stderr, "%s:%d:%d: Error lexico: Secuencia no valida: %s (a continuacion del caracter no valido)\n", current_file, yylloc.first_line, yylloc.first_column, yytext);
+        } else {
+            fprintf(stderr, "Error lexico <linea:%d columna:%d> Secuencia no valida: %s (a continuacion del caracter no valido)\n", yylloc.first_line, yylloc.first_column, yytext);
+        }
         BEGIN(INITIAL);
     }
 }

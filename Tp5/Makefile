@@ -22,17 +22,38 @@ else
     LDLIBS ?= -lm
 endif
 
-.PHONY: all clean test-error test-valido
+.PHONY: all clean test test-error test-valido
 
 .SECONDARY: lex.yy.c bisonCopia.tab.c bisonCopia.tab.h lex.yy.o bisonCopia.tab.o $(DEBUG_STAMP)
 
-all: $(EXE_NAME)
+all: $(EXE_NAME) test
+
+# Ejecuta ambos tests si los archivos existen
+# Usar 'make test' o  'make all' para compilar y correr los tests
+
+test: $(EXE_NAME) test-valido test-error
 
 test-error: $(EXE_NAME)
-	$(EXE) test_sintaxis_error.c
+ifeq ($(OS),Windows_NT)
+	@if exist test_sintaxis_error.c ( $(EXE) test_sintaxis_error.c ) else ( echo Skipping test-error: test_sintaxis_error.c not found )
+else
+	@if [ -f test_sintaxis_error.c ]; then \
+		$(EXE) test_sintaxis_error.c; \
+	else \
+		echo "Skipping test-error: test_sintaxis_error.c not found"; \
+	fi
+endif
 
 test-valido: $(EXE_NAME)
-	$(EXE) test_sintaxis_valido.c
+ifeq ($(OS),Windows_NT)
+	@if exist test_sintaxis_valido.c ( $(EXE) test_sintaxis_valido.c ) else ( echo Skipping test-valido: test_sintaxis_valido.c not found )
+else
+	@if [ -f test_sintaxis_valido.c ]; then \
+		$(EXE) test_sintaxis_valido.c; \
+	else \
+		echo "Skipping test-valido: test_sintaxis_valido.c not found"; \
+	fi
+endif
 
 $(EXE_NAME): lex.yy.o bisonCopia.tab.o tabla_simbolos.o
 	$(CC) $(LDFLAGS) lex.yy.o bisonCopia.tab.o tabla_simbolos.o -o $(EXE_NAME) $(LDLIBS)

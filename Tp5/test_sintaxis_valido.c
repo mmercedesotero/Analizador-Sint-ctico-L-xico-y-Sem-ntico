@@ -53,6 +53,9 @@ switch (x){
 }
 
 int sumarDOS(int l, int o){
-  int result = l + o; 
-  return result; 
+  int result;
+  l= 4;
+  o= 1;
+  result = l + o; 
+  return result;
 }

@@ -7,7 +7,8 @@
 
 #include "tabla_simbolos.h"
 
-extern Simbolo tablaSimbolos[];
+/* Acceso directo a la lista de variables declarada en tabla_simbolos.c */
+extern Variable listaVariables[];
 extern int cantidadSimbolos;
 
 int yyerror(const char *s);
@@ -16,6 +17,9 @@ int yywrap() { return 1; }
 extern FILE *yyin;
 int erroresSintacticos = 0;
 int erroresLexicos = 0;
+
+/* Nombre del archivo actual para prefijar mensajes */
+const char* current_file = NULL;
 
 int yylex(void);
 extern int yylineno;
@@ -61,6 +65,7 @@ extern int yylineno;
 
 // Programa
 programa: listaTopLevel {
+                printf("=========================================\n");
                 printf("Programa valido.\n");
             }
             ;
@@ -88,15 +93,35 @@ listaDeclaraciones: declaracion
 declaracion: declaVarSimples {
                 printf("Se reconocio la declaracion de variables simples.\n");
             }
+            | declaracionFuncion { 
+                printf("Se reconocio una declaracion de funcion.\n"); 
+            }
             | error ';' { yyerrok; }
             ;
             
+declaracionFuncion: TIPO_DATO IDENTIFICADOR '(' listaParametrosop ')' sentencia {
+                 printf("Se reconocio la declaracion de la funcion: %s.\n", $2);
+};
 
-declaVarSimples:
+listaParametrosop:
+            /* vacío */
+            | listaParametros
+            ;
+listaParametros: TIPO_DATO IDENTIFICADOR {
+                /* Registrar parametros como variables declaradas */
+                insertarSimbolo($2, $1, "-", @2.first_line);
+            }
+            | listaParametros ',' TIPO_DATO IDENTIFICADOR {
+                insertarSimbolo($4, $3, "-", @4.first_line);
+            }
+            ;
+            
+
+declaVarSimples: // PARA INSERTAR CADA VARIABLE EN LA TS
       TIPO_DATO listaVarSimples ';' {
           for (int i = 0; i < $2->cantidad; i++) {
               char* val = $2->variables[i].valor ? $2->variables[i].valor : "-";
-              insertarSimbolo($2->variables[i].nombre, $1, val, yylineno);
+              insertarSimbolo($2->variables[i].nombre, $1, val, $2->variables[i].linea);
               if ($2->variables[i].nombre) free($2->variables[i].nombre);
               if ($2->variables[i].valor) free($2->variables[i].valor);
           }
@@ -105,7 +130,6 @@ declaVarSimples:
           free($1);
       }
 ;
-
 
 
 listaVarSimples:
@@ -118,6 +142,7 @@ listaVarSimples:
           } else {
               lista->variables[0].valor = NULL;
           }
+          lista->variables[0].linea = @1.first_line;
           lista->cantidad = 1;
           $$ = lista;
           free($2);
@@ -130,6 +155,7 @@ listaVarSimples:
           } else {
               $1->variables[$1->cantidad].valor = NULL;
           }
+          $1->variables[$1->cantidad].linea = @3.first_line;
           $1->cantidad++;
           $$ = $1;
           free($4);
@@ -218,7 +244,7 @@ declaracionFor:
                 for (int i = 0; i < $2->cantidad; i++) {
                     insertarSimbolo($2->variables[i].nombre, $1,
                                     $2->variables[i].valor ? $2->variables[i].valor : "-",
-                                    yylineno);
+                                    $2->variables[i].linea);
                     if ($2->variables[i].nombre) free($2->variables[i].nombre);
                     if ($2->variables[i].valor) free($2->variables[i].valor);
                 }
@@ -267,8 +293,8 @@ expresionop:
                 // Buscar el valor en la tabla de símbolos
                 char* valor = NULL;
                 for (int i = 0; i < cantidadSimbolos; i++) {
-                    if (strcmp(tablaSimbolos[i].nombre, $1) == 0) {
-                        valor = tablaSimbolos[i].valor;
+                    if (strcmp(listaVariables[i].nombre, $1) == 0) {
+                        valor = listaVariables[i].valor;
                         break;
                     }
                 }
@@ -277,7 +303,7 @@ expresionop:
             | IDENTIFICADOR ASIGNACION expresionop {
                 // Actualizar el valor en la tabla de símbolos
                 if (strlen($3) > 0) {
-                    actualizarValor($1, $3, yylineno);
+                    actualizarValor($1, $3, @1.first_line);
                 }
                 $$ = strdup($3); 
             }
@@ -286,7 +312,7 @@ expresionop:
             }
             | IDENTIFICADOR {
                 if (!existeSimbolo($1)) {
-                    printf("Error: variable '%s' usada sin declarar (linea %d)\n", $1, yylineno);
+                    printf("Error: variable '%s' usada sin declarar (linea %d)\n", $1, @1.first_line);
                 }
                 $$ = strdup($1);
             }
@@ -319,8 +345,8 @@ expresionop:
                 // Post-incremento
                 char* valorActual = NULL;
                 for (int i = 0; i < cantidadSimbolos; i++) {
-                    if (strcmp(tablaSimbolos[i].nombre, $1) == 0) {
-                        valorActual = tablaSimbolos[i].valor;
+                    if (strcmp(listaVariables[i].nombre, $1) == 0) {
+                        valorActual = listaVariables[i].valor;
                         break;
                     }
                 }
@@ -328,7 +354,7 @@ expresionop:
                     double val = atof(valorActual);
                     char buffer[64];
                     sprintf(buffer, "%g", val + 1);
-                    actualizarValor($1, buffer, yylineno);
+                    actualizarValor($1, buffer, @1.first_line);
                     $$ = strdup(buffer);
                 } else {
                     $$ = strdup("1");
@@ -338,8 +364,8 @@ expresionop:
                 // Post-decremento
                 char* valorActual = NULL;
                 for (int i = 0; i < cantidadSimbolos; i++) {
-                    if (strcmp(tablaSimbolos[i].nombre, $1) == 0) {
-                        valorActual = tablaSimbolos[i].valor;
+                    if (strcmp(listaVariables[i].nombre, $1) == 0) {
+                        valorActual = listaVariables[i].valor;
                         break;
                     }
                 }
@@ -347,7 +373,7 @@ expresionop:
                     double val = atof(valorActual);
                     char buffer[64];
                     sprintf(buffer, "%g", val - 1);
-                    actualizarValor($1, buffer, yylineno);
+                    actualizarValor($1, buffer, @1.first_line);
                     $$ = strdup(buffer);
                 } else {
                     $$ = strdup("-1");
@@ -357,8 +383,8 @@ expresionop:
                 // Pre-incremento
                 char* valorActual = NULL;
                 for (int i = 0; i < cantidadSimbolos; i++) {
-                    if (strcmp(tablaSimbolos[i].nombre, $2) == 0) {
-                        valorActual = tablaSimbolos[i].valor;
+                    if (strcmp(listaVariables[i].nombre, $2) == 0) {
+                        valorActual = listaVariables[i].valor;
                         break;
                     }
                 }
@@ -366,7 +392,7 @@ expresionop:
                     double val = atof(valorActual);
                     char buffer[64];
                     sprintf(buffer, "%g", val + 1);
-                    actualizarValor($2, buffer, yylineno);
+                    actualizarValor($2, buffer, @2.first_line);
                     $$ = strdup(buffer);
                 } else {
                     $$ = strdup("1");
@@ -376,8 +402,8 @@ expresionop:
                 // Pre-decremento
                 char* valorActual = NULL;
                 for (int i = 0; i < cantidadSimbolos; i++) {
-                    if (strcmp(tablaSimbolos[i].nombre, $2) == 0) {
-                        valorActual = tablaSimbolos[i].valor;
+                    if (strcmp(listaVariables[i].nombre, $2) == 0) {
+                        valorActual = listaVariables[i].valor;
                         break;
                     }
                 }
@@ -385,7 +411,7 @@ expresionop:
                     double val = atof(valorActual);
                     char buffer[64];
                     sprintf(buffer, "%g", val - 1);
-                    actualizarValor($2, buffer, yylineno);
+                    actualizarValor($2, buffer, @2.first_line);
                     $$ = strdup(buffer);
                 } else {
                     $$ = strdup("-1");
@@ -395,8 +421,8 @@ expresionop:
                 // x += expr
                 char* valorActual = NULL;
                 for (int i = 0; i < cantidadSimbolos; i++) {
-                    if (strcmp(tablaSimbolos[i].nombre, $1) == 0) {
-                        valorActual = tablaSimbolos[i].valor;
+                    if (strcmp(listaVariables[i].nombre, $1) == 0) {
+                        valorActual = listaVariables[i].valor;
                         break;
                     }
                 }
@@ -406,7 +432,7 @@ expresionop:
                     double resultado = valActual + valNuevo;
                     char buffer[64];
                     sprintf(buffer, "%g", resultado);
-                    actualizarValor($1, buffer, yylineno);
+                    actualizarValor($1, buffer, @1.first_line);
                     $$ = strdup(buffer);
                 } else {
                     $$ = strdup($3);
@@ -421,7 +447,7 @@ expresion: expAsignacion
 expAsignacion: expCondicional
             | IDENTIFICADOR ASIGNACION expresion {
                 // Asignación simple: x = expr
-                actualizarValor($1, $3, yylineno);
+                actualizarValor($1, $3, @1.first_line);
                 $$ = strdup($3);
                 free($3);
             }
@@ -430,8 +456,8 @@ expAsignacion: expCondicional
                 // Obtener valor actual de la variable
                 char* valorActual = NULL;
                 for (int i = 0; i < cantidadSimbolos; i++) {
-                    if (strcmp(tablaSimbolos[i].nombre, $1) == 0) {
-                        valorActual = tablaSimbolos[i].valor;
+                    if (strcmp(listaVariables[i].nombre, $1) == 0) {
+                        valorActual = listaVariables[i].valor;
                         break;
                     }
                 }
@@ -441,7 +467,7 @@ expAsignacion: expCondicional
                     double resultado = valActual + valNuevo; // Solo += por ahora
                     char buffer[64];
                     sprintf(buffer, "%g", resultado);
-                    actualizarValor($1, buffer, yylineno);
+                    actualizarValor($1, buffer, @1.first_line);
                     $$ = strdup(buffer);
                 } else {
                     $$ = strdup($3);
@@ -577,8 +603,8 @@ expPostfijo: expPrimaria
                 // Post-incremento: retorna valor actual, luego incrementa
                 char* valorActual = NULL;
                 for (int i = 0; i < cantidadSimbolos; i++) {
-                    if (strcmp(tablaSimbolos[i].nombre, $1) == 0) {
-                        valorActual = tablaSimbolos[i].valor;
+                    if (strcmp(listaVariables[i].nombre, $1) == 0) {
+                        valorActual = listaVariables[i].valor;
                         break;
                     }
                 }
@@ -587,7 +613,7 @@ expPostfijo: expPrimaria
                     $$ = strdup(valorActual); // Retorna valor actual
                     char buffer[64];
                     sprintf(buffer, "%g", val + 1);
-                    actualizarValor($1, buffer, yylineno);
+                    actualizarValor($1, buffer, @1.first_line);
                 } else {
                     $$ = strdup("0");
                 }
@@ -596,8 +622,8 @@ expPostfijo: expPrimaria
                 // Post-decremento: retorna valor actual, luego decrementa
                 char* valorActual = NULL;
                 for (int i = 0; i < cantidadSimbolos; i++) {
-                    if (strcmp(tablaSimbolos[i].nombre, $1) == 0) {
-                        valorActual = tablaSimbolos[i].valor;
+                    if (strcmp(listaVariables[i].nombre, $1) == 0) {
+                        valorActual = listaVariables[i].valor;
                         break;
                     }
                 }
@@ -606,7 +632,7 @@ expPostfijo: expPrimaria
                     $$ = strdup(valorActual); // Retorna valor actual
                     char buffer[64];
                     sprintf(buffer, "%g", val - 1);
-                    actualizarValor($1, buffer, yylineno);
+                    actualizarValor($1, buffer, @1.first_line);
                 } else {
                     $$ = strdup("0");
                 }
@@ -623,17 +649,17 @@ listaArgumentos: expAsignacion
             ;
  
 expPrimaria:
-            IDENTIFICADOR {
+IDENTIFICADOR {
                 // Buscar el valor del identificador en la tabla de símbolos
                 if (!existeSimbolo($1)) {
-                    printf("Error: variable '%s' usada sin declarar (linea %d)\n", $1, yylineno);
+                    printf("Error: variable '%s' usada sin declarar (linea %d)\n", $1, @1.first_line);
                     $$ = strdup("0");
                 } else {
                     // Buscar el valor en la tabla
                     char* valor = NULL;
                     for (int i = 0; i < cantidadSimbolos; i++) {
-                        if (strcmp(tablaSimbolos[i].nombre, $1) == 0) {
-                            valor = tablaSimbolos[i].valor;
+                        if (strcmp(listaVariables[i].nombre, $1) == 0) {
+                            valor = listaVariables[i].valor;
                             break;
                         }
                     }
@@ -691,8 +717,13 @@ nombreTipo:  TIPO_DATO
 
 int yyerror(const char *s) {
     erroresSintacticos++;
-    fprintf(stderr, "Error sintactico <linea:%d columna:[%d:%d]> %s\n",
-            yylloc.first_line, yylloc.first_column, yylloc.last_column - 1, s);
+    if (current_file) {
+        fprintf(stderr, "%s:%d:%d: Error sintactico: %s\n",
+                current_file, yylloc.first_line, yylloc.first_column, s);
+    } else {
+        fprintf(stderr, "Error sintactico <linea:%d columna:[%d:%d]> %s\n",
+                yylloc.first_line, yylloc.first_column, yylloc.last_column - 1, s);
+    }
     return 0;
 }
 
@@ -708,6 +739,10 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    /* Señalización del archivo actual */
+    current_file = argv[1];
+    printf("\n===== Ejecutando: %s =====\n", current_file);
+
     yyin = fopen(argv[1], "r");
     if (!yyin) {
         fprintf(stderr, "No se pudo abrir el archivo %s\n", argv[1]);
@@ -721,7 +756,10 @@ int main(int argc, char *argv[]) {
         fprintf(stdout, "El archivo %s es valido, no se encontraron errores\n", argv[1]);
     fprintf(stdout, "\nAnalisis terminado. Errores totales: %d (sintacticos: %d, lexicos: %d)\n", totalErrores, erroresSintacticos, erroresLexicos);
 
-    mostrarTabla();
+    mostrarTabla(current_file ? current_file : argv[1]);
+
+    fprintf(stdout, "\n==================================================\n");
+    fflush(stdout);
     return 0;
 
 
