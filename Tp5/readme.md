@@ -8,22 +8,17 @@
 * Paye Michael
 
 ## Descripción general
-En este trabajo se desarrolla la tabla de simbolos con algunas limitaciones para realizar el analisis semántico utilizando bison.
+El análisis semántico es la etapa del proceso de compilación encargada de validar que las construcciones sintácticamente correctas tengan sentido dentro del contexto del sistema.
+En esta última parte del trabajo anual desarrollamos una analizador semántico en C, utilizando Bison, y una tabla de símbolos (con algunas limitaciones) para realizar el análisis semántico y complementar las entregas anteriores, en las que implementamos las herramientas para el análisis léxico y sintáctico, usando también Bison y Flex.
+Durante esta etapa verificamos:
+- El control de tipos de expresiones y asignaciones 
+- La declaración de variables y funciones
+- La cantidad y tipo de parámetros en llamadas funciones
 
-La tabla de simbolos se encarga de trackear las diferentes variables, su tipo, su valor y su nombre. De esta manera puede detectar un error en caso de realizarse operaciones entre variables de distintos tipos.
+Además, como el lenguaje utilizado es C y este es fuertemente tipado, el analizador reporta errores ante operaciones o asignaciones con tipos incompatibles. 
 
-<!-- Descomentar cuando se haga -->
-Además, se lleva un registro el nombre de las funciones, la cantidad de parametros y los tipos, para detectar llamadas a funciones con errores de tipos o con menos parametros de los debidos.
-
-Cuando se intenta declarar un nueva variable o funcion, la tabla de simbolos verificará que no haya otro identificador con el mismo nombre. (EJ. en caso de haber una funcion llamada sumar, no puede haber una declaración de una variable llamada sumar).
-
-La tabla de simbolos tambien lleva registro del scope de las variables, pero para simplificar el trabajo, no será implementado.
-
-Además, la tabla de simbolos tiene una lista de arrays, la cual tampoco fue implementada para no complejizar el trabajo.
-
-
-
-## Requisitos
+La tabla de símbolos es la estructura central del analizador y se encarga de registrar las variables, su tipo, valor y nombre, para poder detectar errores en caso de realirse operaciones entre variables de distintos tipos. Además, lleva un registro de las funciones declaradas, junto con la cantidad y tipo de parámetros, permitiendo detectar llamadas con errores de tipo o con un número incorrecto de argumentos.
+Cuando se intenta declarar un nueva variable o función, verificará que no haya otro identificador con el mismo nombre. (por ejemplo, en caso de haber una funcion llamada sumar, no puede declararse una variable con el mismo nombre).
 
 
 ## Estructura del proyecto
@@ -35,20 +30,32 @@ Además, la tabla de simbolos tiene una lista de arrays, la cual tampoco fue imp
 
 ## Alcance y limitaciones
 ### Alcance 
-Tabla de simbolos con **lista de funciones** y con **lista de variables**
+El analizador implementa: 
+- Control de declaraciones y redefiniciones.
+- Validación de tipos en asignaciones y operaciones aritméticas simples.
+- Actualización de valores en operaciones de asignación (=, +=, etcétera).
+- Tabla de simbolos con **lista de funciones** y con **lista de variables**
 
 **Lista de variables**
-Almacena el nombre de la variable, el tipo, el valor y la linea donde fue declarada para poder hacer el seguimiento de las declaraciones, para evitar que se usen variables no declaradas y que no se vuelvan a declarar las ya existentes
+Almacena el nombre de la variable, el tipo, el valor y la línea dónde fue declarada, permitiendo verificar el uso de variables no declaradas, evitar redeclaraciones y mantener actualizados los valores durante las asignaciones.
 
 **Lista de funciones**
-Almacena el nombre de la funcion, sus parametros y los tipos de los parametros para poder revisar que las llamadas a las funciones se estén haciendo de forma correcta y que los parametros tengan los tipos correspondientes
+Almacena el nombre de la función, cantidad y tipos de parámetros, para detectar errores en los mismos y validar llamadas a funciones.
 
 ### Limitaciones
-Algunas de las caracteristicas que utiliza la tabla de simbolos en la vida real y que no se implementaron en este tp para no complejizarlo son:
-* No hay seguimiento de scope de variables
-* No hay lista de arrays
+Para mantener una implementación simple y enfocada en conceptos principales, no se incluyen: 
+* Lista de arrays
 <!-- * No hay revision de tipos en operaciones -->
-* No hay revision de tipo de retorno en funciones
+* Revision de tipo de retorno en funciones.
+* Control de ámbitos(scopes): todas las variables, incluidas las declaradas como parámetros de funciones, se registran como variables globales. Esto permite que los parámetros puedan ser accedidos fuera de su definición y que, si existen dos identificadores con el mismo nombre, se produzca una redefinición o sobrescritura.
 
 
 ## Uso
+Se realizaron pruebas de ejemplo para verificar y en todos los casos el analizador reportó correctamete las aplicaciones correctas y los errores semánticos. 
+# test_valido.c 
+Incluye declaraciones correctas, asignaciones compatibles, operaciones válidas y funciones con parametros adecuados. 
+# test_error.c
+Con usos de variables no declaradas, tipos incompatibles y estructuras incompletas.
+
+## Conclusiones 
+La implementación de este analizador semantico permitió integrar las tres etapas del proceso de compilación (léxica, sintáctica y semántica) y reforzar la comprensión del rol de la tabla de simbolos como estructura central para esta última validación.
