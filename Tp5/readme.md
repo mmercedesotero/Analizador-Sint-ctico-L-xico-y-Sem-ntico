@@ -36,10 +36,10 @@ El analizador implementa:
 - Actualización de valores en operaciones de asignación (=, +=, etcétera).
 - Tabla de simbolos con **lista de funciones** y con **lista de variables**
 
-**Lista de variables**
+**Lista de variables**  
 Almacena el nombre de la variable, el tipo, el valor y la línea dónde fue declarada, permitiendo verificar el uso de variables no declaradas, evitar redeclaraciones y mantener actualizados los valores durante las asignaciones.
 
-**Lista de funciones**
+**Lista de funciones**  
 Almacena el nombre de la función, cantidad y tipos de parámetros, para detectar errores en los mismos y validar llamadas a funciones.
 
 ### Limitaciones
@@ -52,9 +52,9 @@ Para mantener una implementación simple y enfocada en conceptos principales, no
 
 ## Uso
 Se realizaron pruebas de ejemplo para verificar y en todos los casos el analizador reportó correctamete las aplicaciones correctas y los errores semánticos. 
-# test_valido.c 
+### test_valido.c 
 Incluye declaraciones correctas, asignaciones compatibles, operaciones válidas y funciones con parametros adecuados. 
-# test_error.c
+### test_error.c
 Con usos de variables no declaradas, tipos incompatibles y estructuras incompletas.
 
 ## Conclusiones 
