@@ -66,6 +66,11 @@ LETRAS_Y_DIGITOS_AFTER [a-zA-Z0-9_]
     yylval.str = strdup(yytext);
     return CONST_CARACTER;
 }
+\"(\\.|[^\\\"])*\" {
+    actualizarLocationsColumnas();
+    yylval.str = strdup(yytext);
+    return LITERAL_CADENA;
+}
 {DIGITO_DECIMAL}+\.{DIGITO_DECIMAL}+ {
     actualizarLocationsColumnas();
     yylval.real = atof(yytext);

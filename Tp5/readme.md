@@ -48,7 +48,7 @@ Para mantener una implementación simple y enfocada en conceptos principales, no
 <!-- * No hay revision de tipos en operaciones -->
 * Revision de tipo de retorno en funciones.
 * Control de ámbitos(scopes): todas las variables, incluidas las declaradas como parámetros de funciones, se registran como variables globales. Esto permite que los parámetros puedan ser accedidos fuera de su definición y que, si existen dos identificadores con el mismo nombre, se produzca una redefinición o sobrescritura.
-
+* Las funciones no se pueden redefinir ni redeclarar. Solo se acepta 1 declaracion por nombre de funcion.
 
 ## Uso
 Se realizaron pruebas de ejemplo para verificar y en todos los casos el analizador reportó correctamete las aplicaciones correctas y los errores semánticos. 

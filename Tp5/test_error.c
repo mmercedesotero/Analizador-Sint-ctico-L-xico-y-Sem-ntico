@@ -30,6 +30,8 @@ while (x < 20) {
     @x = 5;  
 }
 
+//holaaaa
+
 int mi@var = 10;
 
 char doble = 'ab';

@@ -58,7 +58,7 @@ extern int yylineno;
 %type <expr> expresion expAsignacion expCondicional expOr expAnd expIgualdad expRelacional expAditiva expMultiplicativa expPostfijo expPrimaria
 %type <expr> expUnaria constante literalCadena
 %type <str> operUnario nombreTipo
-%type <lvars> listaVarSimples
+%type <lvars> listaVarSimples listaArgumentosop listaArgumentos
 
 %left '+' '-'
 %left '*' '/'
@@ -750,7 +750,40 @@ expPostfijo: expPrimaria  {
             }
             /* llamada directa a función por nombre: IDENTIFICADOR(...) */
             | IDENTIFICADOR '(' listaArgumentosop ')' {
+                /* Verificar que la funcion existe y validar tipos de argumentos */
+                ListaVariables* args = $3;
+                int cantArgs = args ? args->cantidad : 0;
+                Parametro* tempArgs = NULL;
+                
+                if (args && cantArgs > 0) {
+                    tempArgs = malloc(sizeof(Parametro) * cantArgs);
+                    for (int i = 0; i < cantArgs; ++i) {
+                        tempArgs[i].nombre = NULL;
+                        tempArgs[i].tipo = args->variables[i].tipo ? strdup(args->variables[i].tipo) : NULL;
+                    }
+                }
+                
+                verificarLlamadaFuncion($1, tempArgs, cantArgs);
+                
+                /* Liberar argumentos temporales */
+                if (tempArgs) {
+                    for (int i = 0; i < cantArgs; ++i) {
+                        if (tempArgs[i].tipo) free(tempArgs[i].tipo);
+                    }
+                    free(tempArgs);
+                }
+                
+                /* Liberar la lista de argumentos */
+                if (args) {
+                    for (int i = 0; i < args->cantidad; ++i) {
+                        if (args->variables[i].tipo) free(args->variables[i].tipo);
+                    }
+                    free(args->variables);
+                    free(args);
+                }
+                
                 $$.valor = strdup("0");
+                $$.tipo = strdup("int");  /* tipo retorno por defecto */
                 free($1);
             }
             | expPostfijo '[' expresion ']'  {
@@ -810,12 +843,29 @@ expPostfijo: expPrimaria  {
             ;
 
 listaArgumentosop:
-             /* vacío */
-            | listaArgumentos
-            ;   
+             /* vacío */ { $$ = NULL; }
+            | listaArgumentos { $$ = $1; }
+            ;
 
-listaArgumentos: expAsignacion  
-            | listaArgumentos ',' expAsignacion 
+listaArgumentos: expAsignacion {
+                ListaVariables* lista = malloc(sizeof(ListaVariables));
+                lista->variables = malloc(sizeof(Variable));
+                lista->variables[0].nombre = NULL;
+                lista->variables[0].tipo = $1.tipo ? strdup($1.tipo) : strdup("indef");
+                lista->variables[0].valor = NULL;
+                lista->variables[0].linea = @1.first_line;
+                lista->cantidad = 1;
+                $$ = lista;
+            }
+            | listaArgumentos ',' expAsignacion {
+                $1->variables = realloc($1->variables, sizeof(Variable) * ($1->cantidad + 1));
+                $1->variables[$1->cantidad].nombre = NULL;
+                $1->variables[$1->cantidad].tipo = $3.tipo ? strdup($3.tipo) : strdup("indef");
+                $1->variables[$1->cantidad].valor = NULL;
+                $1->variables[$1->cantidad].linea = @3.first_line;
+                $1->cantidad++;
+                $$ = $1;
+            }
             ;
  
 expPrimaria:
@@ -923,7 +973,7 @@ int main(int argc, char *argv[]) {
 
     int resultado = yyparse();
 
-    int totalErrores = erroresSintacticos + erroresLexicos;
+    int totalErrores = erroresSintacticos + erroresLexicos + erroresSemanticos;
     if (resultado == 0 && totalErrores == 0)
         fprintf(stdout, "El archivo %s es valido, no se encontraron errores\n", argv[1]);
     fprintf(stdout, "\nAnalisis terminado. Errores totales: %d (sintacticos: %d, lexicos: %d, semanticos: %d)\n", totalErrores, erroresSintacticos, erroresLexicos, erroresSemanticos);

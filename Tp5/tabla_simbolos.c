@@ -9,11 +9,11 @@ extern int erroresSemanticos;
 extern FILE *yyin;
 extern int yylineno;
 
-#define MAX_SIMBOLOS 100
+#define MAX_VARIABLES 100
 #define MAX_FUNCIONES 50
 
 
-Variable listaVariables[MAX_SIMBOLOS];
+Variable listaVariables[MAX_VARIABLES];
 int cantidadSimbolos = 0;
 
 
@@ -73,8 +73,8 @@ int insertarSimbolo(char* nombre, char* tipo, char* valor, int linea) {
         }
     }
 
-    if (cantidadSimbolos >= MAX_SIMBOLOS) {
-        fprintf(stderr, "Error semantico: limite de simbolos alcanzado (%d)\n", MAX_SIMBOLOS);
+    if (cantidadSimbolos >= MAX_VARIABLES) {
+        fprintf(stderr, "Error semantico: limite de simbolos alcanzado (%d)\n", MAX_VARIABLES);
         erroresSemanticos++;
         return ERR_LLENA;
     }
@@ -186,25 +186,10 @@ int insertarFuncion(char* nombre, char* tipo, char* valor, int cantidadParametro
 
     Funcion* existente = buscarFuncionPorNombre(nombre);
     if (existente) {
-        /* Actualizar registro existente: liberar campos previos y copiar nuevos */
-        if (existente->nombre) free(existente->nombre);
-        if (existente->tipo) free(existente->tipo);
-        if (existente->valor) free(existente->valor);
-        liberarParametros(existente->parametros, existente->cantidadParametros);
-
-        existente->nombre = strdup(nombre);
-        existente->tipo = tipo ? strdup(tipo) : NULL;
-        existente->valor = valor ? strdup(valor) : NULL;
-        existente->cantidadParametros = cantidadParametros;
-        existente->parametros = NULL;
-        if (cantidadParametros > 0 && parametros) {
-            existente->parametros = malloc(sizeof(Parametro) * cantidadParametros);
-            for (int i = 0; i < cantidadParametros; ++i) {
-                existente->parametros[i].nombre = parametros[i].nombre ? strdup(parametros[i].nombre) : NULL;
-                existente->parametros[i].tipo = parametros[i].tipo ? strdup(parametros[i].tipo) : NULL;
-            }
-        }
-        return ERR_OK;
+        /* No permitir redefinición de funciones: reportar error semántico y no hacer nada */
+        fprintf(stderr, "Error semantico: identificador '%s' ya declarado como funcion (no se puede redefinir)\n", nombre);
+        erroresSemanticos++;
+        return ERR_DUPLICADO;
     }
 
     if (cantidadFunciones >= MAX_FUNCIONES) {
