@@ -99,7 +99,9 @@ declaVarSimples: TIPO_DATO listaVarSimples ';' {
 listaVarSimples: unaVarSimple {
                 $$ = strdup($1);
                 free($1);
-            }
+            }listaVarSimples: unaVarSimple {
+                $$ = strdup($1);
+                free($1);
             | listaVarSimples ',' unaVarSimple {
                 char* temp = malloc(strlen($1) + strlen($3) + 3); 
                 sprintf(temp, "%s, %s", $1, $3);
