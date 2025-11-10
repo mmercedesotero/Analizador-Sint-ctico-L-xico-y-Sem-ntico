@@ -27,8 +27,17 @@ Cuando se intenta declarar un nueva variable o función, verificará que no haya
 - `Makefile`: compila el parser y el binario.
 - `test_valido.c`, `test_error.c`: ejemplos de entrada para probar el parser y las comprobaciones semánticas.
 
+## Compilación y uso con Make
+El proyecto incluye un `Makefile` que unifica la experiencia en Windows y Linux.
 
-## Alcance y limitaciones
+Targets principales:
+- `make` o `make all`: compila el binario y ejecuta ambos tests.
+- `make test`: ejecuta `test-valido` y `test-error` (si los archivos existen).
+- `make test-valido`: corre el parser sobre `test_valido.c`.
+- `make test-error`: corre el parser sobre `test_error.c`.
+- `make clean`: limpia binarios, archivos generados por Flex/Bison y temporales de debug.
+
+
 ### Alcance 
 El analizador implementa: 
 - Control de declaraciones y redefiniciones.
@@ -45,7 +54,6 @@ Almacena el nombre de la función, cantidad y tipos de parámetros, para detecta
 ### Limitaciones
 Para mantener una implementación simple y enfocada en conceptos principales, no se incluyen: 
 * Lista de arrays
-<!-- * No hay revision de tipos en operaciones -->
 * Revision de tipo de retorno en funciones.
 * Control de ámbitos(scopes): todas las variables, incluidas las declaradas como parámetros de funciones, se registran como variables globales. Esto permite que los parámetros puedan ser accedidos fuera de su definición y que, si existen dos identificadores con el mismo nombre, se produzca una redefinición o sobrescritura.
 * Las funciones no se pueden redefinir ni redeclarar. Solo se acepta 1 declaracion por nombre de funcion.
